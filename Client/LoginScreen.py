@@ -9,13 +9,12 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QDialog
-
-import CSS.FastLogin_CSS, CSS.LoginLogo_CSS, CSS.UsernameIcon_CSS
-import sys
-
+from PyQt5.QtWidgets import QWidget
+from PyQt5.Qt import Qt
 from Protocol import PROTOCOLS
 from Observable import Observable
+import CSS.login_screen_css
+import sys
 
 
 class LoginScreen(Observable):
@@ -23,44 +22,46 @@ class LoginScreen(Observable):
         Observable.__init__(self)
         self.LoginWindow = None
 
+
     def setupUi(self, LoginWindow):
-        LoginWindow.setObjectName("MainWindow")
-        LoginWindow.resize(672, 540)
+        LoginWindow.setObjectName("LoginWindow")
+        LoginWindow.resize(678, 582)
+        LoginWindow.setMinimumSize(QtCore.QSize(678, 582))
+        LoginWindow.setMaximumSize(QtCore.QSize(678, 582))
         LoginWindow.setWindowOpacity(1.0)
         LoginWindow.setStyleSheet("")
-
         self.centralwidget = QtWidgets.QWidget(LoginWindow)
         self.centralwidget.setObjectName("centralwidget")
-
         self.login_white_label = QtWidgets.QLabel(self.centralwidget)
-        self.login_white_label.setGeometry(QtCore.QRect(10, 20, 331, 491))
+        self.login_white_label.setGeometry(QtCore.QRect(10, 10, 331, 531))
         self.login_white_label.setMinimumSize(QtCore.QSize(0, 0))
         self.login_white_label.setAutoFillBackground(False)
-        self.login_white_label.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.login_white_label.setFrameShape(QtWidgets.QFrame.Box)
+        self.login_white_label.setStyleSheet("background-color: rgb(255, 255, 255);\n"
+                                             "")
+        self.login_white_label.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.login_white_label.setLineWidth(0)
         self.login_white_label.setText("")
         self.login_white_label.setObjectName("login_white_label")
-
         self.login_logo_label = QtWidgets.QLabel(self.centralwidget)
-        self.login_logo_label.setGeometry(QtCore.QRect(330, 0, 341, 531))
-        self.login_logo_label.setMinimumSize(QtCore.QSize(331, 521))
+        self.login_logo_label.setGeometry(QtCore.QRect(340, 10, 335, 531))
+        self.login_logo_label.setMinimumSize(QtCore.QSize(0, 0))
+        self.login_logo_label.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.login_logo_label.setAutoFillBackground(False)
-        self.login_logo_label.setStyleSheet("image: url(:/logo/login_logo.jpg);")
-        self.login_logo_label.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.login_logo_label.setStyleSheet("image: url(:/window_logo/login_logo.jpg);\n"
+                                            "background-color: rgb(255, 255, 255);")
+        self.login_logo_label.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.login_logo_label.setLineWidth(0)
         self.login_logo_label.setText("")
         self.login_logo_label.setObjectName("login_logo_label")
-
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
-        self.label_3.setGeometry(QtCore.QRect(100, 30, 191, 51))
+        self.label_3.setGeometry(QtCore.QRect(100, 20, 191, 51))
         font = QtGui.QFont()
         font.setFamily("Comic Sans MS")
         font.setPointSize(28)
         self.label_3.setFont(font)
         self.label_3.setObjectName("label_3")
-
         self.username_textfield = QtWidgets.QLineEdit(self.centralwidget)
-        self.username_textfield.setGeometry(QtCore.QRect(90, 120, 231, 31))
+        self.username_textfield.setGeometry(QtCore.QRect(90, 110, 231, 31))
         font = QtGui.QFont()
         font.setFamily("Comic Sans MS")
         font.setStyleStrategy(QtGui.QFont.PreferDefault)
@@ -70,28 +71,25 @@ class LoginScreen(Observable):
         self.username_textfield.setEchoMode(QtWidgets.QLineEdit.Normal)
         self.username_textfield.setClearButtonEnabled(True)
         self.username_textfield.setObjectName("username_textfield")
-
         self.password_textfield = QtWidgets.QLineEdit(self.centralwidget)
-        self.password_textfield.setGeometry(QtCore.QRect(90, 180, 231, 31))
+        self.password_textfield.setGeometry(QtCore.QRect(90, 170, 231, 31))
         self.password_textfield.setFrame(False)
         self.password_textfield.setEchoMode(QtWidgets.QLineEdit.PasswordEchoOnEdit)
         self.password_textfield.setClearButtonEnabled(True)
         self.password_textfield.setObjectName("password_textfield")
-
         self.password_icon_label = QtWidgets.QLabel(self.centralwidget)
-        self.password_icon_label.setGeometry(QtCore.QRect(30, 170, 61, 41))
+        self.password_icon_label.setGeometry(QtCore.QRect(30, 160, 61, 41))
         self.password_icon_label.setStyleSheet("image: url(:/password_icon/password_icon1.png);")
         self.password_icon_label.setText("")
         self.password_icon_label.setObjectName("password_icon_label")
-
         self.username_icon_label = QtWidgets.QLabel(self.centralwidget)
-        self.username_icon_label.setGeometry(QtCore.QRect(40, 110, 51, 41))
+        self.username_icon_label.setGeometry(QtCore.QRect(40, 100, 51, 41))
         self.username_icon_label.setStyleSheet("image: url(:/username_icon/username_icon1.png);")
         self.username_icon_label.setText("")
         self.username_icon_label.setObjectName("username_icon_label")
         self.username_line = QtWidgets.QFrame(self.centralwidget)
         self.username_line.setEnabled(True)
-        self.username_line.setGeometry(QtCore.QRect(90, 140, 231, 20))
+        self.username_line.setGeometry(QtCore.QRect(90, 130, 231, 20))
         font = QtGui.QFont()
         font.setBold(False)
         font.setUnderline(False)
@@ -101,76 +99,82 @@ class LoginScreen(Observable):
         self.username_line.setFrameShape(QtWidgets.QFrame.HLine)
         self.username_line.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.username_line.setObjectName("username_line")
-
         self.login_button = QtWidgets.QPushButton(self.centralwidget)
-        self.login_button.setGeometry(QtCore.QRect(70, 230, 111, 41))
-        self.login_button.setObjectName("login_button")
-        self.login_button.clicked.connect(self.login)
+        self.login_button.setGeometry(QtCore.QRect(70, 250, 111, 41))
         self.login_button.setStyleSheet("QPushButton{\n"
                                         "    color: white;\n"
                                         "    background-color: rgb(58, 134, 255);\n"
                                         "    border-radius: 20px;\n"
                                         "}")
-
+        self.login_button.setObjectName("login_button")
         self.forgot_password_link_button = QtWidgets.QCommandLinkButton(self.centralwidget)
-        self.forgot_password_link_button.setGeometry(QtCore.QRect(90, 290, 201, 41))
+        self.forgot_password_link_button.setGeometry(QtCore.QRect(80, 320, 201, 41))
         self.forgot_password_link_button.setObjectName("forgot_password_link_button")
-
         self.google_logo_label = QtWidgets.QLabel(self.centralwidget)
-        self.google_logo_label.setGeometry(QtCore.QRect(30, 440, 71, 51))
-        self.google_logo_label.setStyleSheet("image: url(:/google/google_login_logo.png);")
+        self.google_logo_label.setGeometry(QtCore.QRect(20, 470, 71, 51))
+        self.google_logo_label.setStyleSheet("image: url(:/fast_login_icons/google_login_logo.png);")
         self.google_logo_label.setText("")
         self.google_logo_label.setObjectName("google_logo_label")
-
         self.facebook_logo_label = QtWidgets.QLabel(self.centralwidget)
-        self.facebook_logo_label.setGeometry(QtCore.QRect(100, 440, 71, 51))
-        self.facebook_logo_label.setStyleSheet("image: url(:/facebook/facebook_login_logo.png);")
+        self.facebook_logo_label.setGeometry(QtCore.QRect(90, 470, 71, 51))
+        self.facebook_logo_label.setStyleSheet("image: url(:/fast_login_icons/facebook_login_logo.png);")
         self.facebook_logo_label.setText("")
         self.facebook_logo_label.setObjectName("facebook_logo_label")
-
         self.linkedin_logo_label = QtWidgets.QLabel(self.centralwidget)
-        self.linkedin_logo_label.setGeometry(QtCore.QRect(170, 440, 71, 51))
-        self.linkedin_logo_label.setStyleSheet("image: url(:/linkedin/linkedin_login_logo.png);")
+        self.linkedin_logo_label.setGeometry(QtCore.QRect(160, 470, 71, 51))
+        self.linkedin_logo_label.setStyleSheet("image: url(:/fast_login_icons/linkedin_login_logo.png);")
         self.linkedin_logo_label.setText("")
         self.linkedin_logo_label.setObjectName("linkedin_logo_label")
-
         self.twitter_logo_label = QtWidgets.QLabel(self.centralwidget)
-        self.twitter_logo_label.setGeometry(QtCore.QRect(240, 440, 71, 51))
-        self.twitter_logo_label.setStyleSheet("image: url(:/twitter/twitter_login_logo.png);")
+        self.twitter_logo_label.setGeometry(QtCore.QRect(230, 470, 71, 51))
+        self.twitter_logo_label.setStyleSheet("image: url(:/fast_login_icons/twitter_login_logo.png);")
         self.twitter_logo_label.setText("")
         self.twitter_logo_label.setObjectName("twitter_logo_label")
-
         self.signin_label = QtWidgets.QLabel(self.centralwidget)
-        self.signin_label.setGeometry(QtCore.QRect(40, 400, 111, 31))
+        self.signin_label.setGeometry(QtCore.QRect(30, 430, 111, 31))
         font = QtGui.QFont()
         font.setFamily("Comic Sans MS")
         font.setPointSize(12)
         self.signin_label.setFont(font)
         self.signin_label.setObjectName("signin_label")
-
         self.cancel_button = QtWidgets.QPushButton(self.centralwidget)
-        self.cancel_button.setGeometry(QtCore.QRect(190, 230, 111, 41))
-        self.cancel_button.clicked.connect(exit)
+        self.cancel_button.setGeometry(QtCore.QRect(190, 250, 111, 41))
         self.cancel_button.setStyleSheet("QPushButton{\n"
                                          "    color: white;\n"
                                          "    background-color: rgb(236, 31, 39);\n"
                                          "    border-radius: 20px;\n"
                                          "}")
         self.cancel_button.setObjectName("cancel_button")
-
-        self.p = QtWidgets.QFrame(self.centralwidget)
-        self.p.setEnabled(True)
-        self.p.setGeometry(QtCore.QRect(90, 200, 231, 20))
+        self.password_line = QtWidgets.QFrame(self.centralwidget)
+        self.password_line.setEnabled(True)
+        self.password_line.setGeometry(QtCore.QRect(90, 190, 231, 20))
         font = QtGui.QFont()
         font.setBold(False)
         font.setUnderline(False)
         font.setWeight(50)
-        self.p.setFont(font)
-        self.p.setLineWidth(1)
-        self.p.setFrameShape(QtWidgets.QFrame.HLine)
-        self.p.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.p.setObjectName("p")
-
+        self.password_line.setFont(font)
+        self.password_line.setLineWidth(1)
+        self.password_line.setFrameShape(QtWidgets.QFrame.HLine)
+        self.password_line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.password_line.setObjectName("password_line")
+        self.login_result = QtWidgets.QLabel(self.centralwidget)
+        self.login_result.setGeometry(QtCore.QRect(90, 210, 221, 16))
+        font = QtGui.QFont()
+        font.setFamily("Comic Sans MS")
+        font.setPointSize(9)
+        self.login_result.setFont(font)
+        self.login_result.setObjectName("login_result")
+        self.line = QtWidgets.QFrame(self.centralwidget)
+        self.line.setGeometry(QtCore.QRect(330, 11, 20, 527))
+        self.line.setMinimumSize(QtCore.QSize(0, 527))
+        font = QtGui.QFont()
+        font.setUnderline(False)
+        self.line.setFont(font)
+        self.line.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.line.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.line.setLineWidth(0)
+        self.line.setFrameShape(QtWidgets.QFrame.VLine)
+        self.line.setObjectName("line")
         self.login_white_label.raise_()
         self.label_3.raise_()
         self.username_textfield.raise_()
@@ -186,25 +190,33 @@ class LoginScreen(Observable):
         self.signin_label.raise_()
         self.cancel_button.raise_()
         self.username_line.raise_()
-        self.p.raise_()
+        self.password_line.raise_()
+        self.login_result.raise_()
         self.login_logo_label.raise_()
+        self.line.raise_()
         LoginWindow.setCentralWidget(self.centralwidget)
-
         self.menubar = QtWidgets.QMenuBar(LoginWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 672, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 678, 21))
         self.menubar.setObjectName("menubar")
         LoginWindow.setMenuBar(self.menubar)
-
         self.statusbar = QtWidgets.QStatusBar(LoginWindow)
         self.statusbar.setObjectName("statusbar")
+        LoginWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(LoginWindow)
         QtCore.QMetaObject.connectSlotsByName(LoginWindow)
+
+        # Manual components settings
+        LoginWindow.keyPressEvent = self.keyPressEvent
+        self.username_textfield.mousePressEvent = self.mousePressEvent
+        self.password_textfield.mousePressEvent = self.mousePressEvent
+        self.login_button.clicked.connect(self.login)
+        self.cancel_button.clicked.connect(exit)
         self.LoginWindow = LoginWindow
 
-    def retranslateUi(self, MainWindow):
+    def retranslateUi(self, login_screen):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        login_screen.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.label_3.setText(_translate("MainWindow", "Login Zone"))
         self.username_textfield.setText(_translate("MainWindow", "Your Username..."))
         self.password_textfield.setText(_translate("MainWindow", "password"))
@@ -213,8 +225,23 @@ class LoginScreen(Observable):
         self.signin_label.setText(_translate("MainWindow", "Sign In With:"))
         self.cancel_button.setText(_translate("MainWindow", "Cancel"))
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return:
+            self.login_button.click()
+
+        if event.key() == Qt.Key_Enter:
+            self.login_button.click()
+
+        if event.key() == Qt.Key_Escape:
+            exit(0)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.username_textfield.setText("")
+            self.password_textfield.setText("")
+
     def login(self):
         cmd = PROTOCOLS["login_request"]
         username = self.username_textfield.text()
         password = self.password_textfield.text()
-        self.notify([cmd, username, password])
+        self.notify([cmd, username, password])  # notify Client with login details.

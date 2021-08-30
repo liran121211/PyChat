@@ -56,7 +56,7 @@ class ClientTCP(Observable):
         """
         while True:
             msg = self.client_socket.recv(self.max_msg_length).decode()
-            self.clientEvents(self.client_socket, parse_message(msg))
+            self.serverTransmission(self.client_socket, parse_message(msg))
             time.sleep(0.5)  # let client lookup for server responses every 1 sec
 
     def send_msg(self, cmd, msg):
@@ -68,7 +68,7 @@ class ClientTCP(Observable):
         """
         self.client_socket.send(build_message(cmd, msg).encode())
 
-    def clientEvents(self, client_socket, message):
+    def serverTransmission(self, client_socket, message):
         """
         Receive message from server that contains (command) to follow.
         :param client_socket: Client socket obj.
@@ -79,16 +79,19 @@ class ClientTCP(Observable):
         msg = message[1]
 
         if cmd == "LOGIN_OK":
+            # move to client chat screen
             debugMessages("AUTHENTICATED")
             self.gui.LoginWindow.close()
 
         if cmd == "LOGIN_ERROR":
+            self.gui.login_result.setText("Invalid username or password.")
+            self.gui.login_result.setStyleSheet("color: rgb(236, 31, 39);")
             debugMessages("NOT_AUTHENTICATED")
 
         if cmd == "DB_CONNECTION_STATUS":
             if msg == "ALIVE":
                 self.notify("CLIENT_DB_CONNECTED")
-                # client login screen
+                # move to client login screen
                 time.sleep(0.5)
                 self.threads["LOGIN_SCREEN"] = threading.Thread(target=self.LoginGUI)
                 self.threads["LOGIN_SCREEN"].start()
@@ -104,6 +107,7 @@ class ClientTCP(Observable):
         app = LoadingScreen.QtWidgets.QApplication(LoadingScreen.sys.argv)
         LoadingWindow = LoadingScreen.QtWidgets.QMainWindow()
         LoadingWindow.setWindowFlags(LoadingScreen.QtCore.Qt.FramelessWindowHint)
+        LoadingWindow.setAttribute(LoadingScreen.QtCore.Qt.WA_TranslucentBackground)
         self.gui = LoadingScreen.LoadingScreen()
         self.gui.setupUi(LoadingWindow)
         self.attach(self.gui)  # Attach LoadingScreen observer
