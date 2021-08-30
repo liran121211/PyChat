@@ -1,10 +1,13 @@
-from Client.Protocol import debugMessages
+import time
+
+from Protocol import debugMessages
 from PyQt5 import QtCore, QtGui, QtWidgets
-import CSS
 import sys
+import CSS.LoadingScreenCSS
 
-
-class Ui_LoadingWindow(object):
+class LoadingScreen(object):
+    def __init__(self):
+        self.LoadingWindow = None
 
     def setupUi(self, LoadingWindow):
         LoadingWindow.setObjectName("LoadingWindow")
@@ -48,6 +51,7 @@ class Ui_LoadingWindow(object):
 
         self.retranslateUi(LoadingWindow)
         QtCore.QMetaObject.connectSlotsByName(LoadingWindow)
+        self.LoadingWindow = LoadingWindow
 
     def retranslateUi(self, LoadingWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -82,3 +86,5 @@ class Ui_LoadingWindow(object):
         if cmd == "CLIENT_DB_CONNECTED":
             self.loading_bar.setValue(99)
             self.loading_label.setText(debugMessages(cmd))
+            time.sleep(0.5)
+            self.LoadingWindow.close()
