@@ -14,6 +14,8 @@ class MultipleTCP:
         self.clients_sockets = {}
         self.messages_to_send = []
         self.database = None
+        self.ready_to_write = None
+        self.ready_to_read = None
 
     def setup(self):
         """
@@ -38,10 +40,10 @@ class MultipleTCP:
         :return:
         """
         while True:
-            ready_to_read, ready_to_write, in_error = select.select(
+            self.ready_to_read, self.ready_to_write , in_error = select.select(
                 [self.server_socket] + list(self.clients_sockets.keys()), list(self.clients_sockets.keys()), [])
 
-            for current_socket in ready_to_read:
+            for current_socket in self.ready_to_read:
                 if current_socket is self.server_socket:
                     client_socket, client_address = current_socket.accept()
                     self.clients_sockets[client_socket] = client_address
@@ -51,7 +53,7 @@ class MultipleTCP:
                 else:
                     try:
                         client_msg = parse_message(current_socket.recv(self.max_msg_length).decode())
-                        self.serverEvents(current_socket, client_msg)
+                        self.clientTransmission(current_socket, client_msg)
 
                     except ConnectionError:
                         print("Client: ", self.clients_sockets[current_socket], " is now disconnected.")
@@ -61,11 +63,11 @@ class MultipleTCP:
             # responding to available clients only.
             for message in self.messages_to_send:
                 current_socket, data = message
-                if current_socket in ready_to_write:
+                if current_socket in self.ready_to_write:
                     current_socket.send(data.encode())
                     self.messages_to_send.remove(message)
 
-    def serverEvents(self, client_socket, message):
+    def clientTransmission(self, client_socket, message):
         """
         Receive message from client that contains (command) to follow.
         :param client_socket: Client socket obj.
@@ -78,8 +80,12 @@ class MultipleTCP:
         if cmd == "LOGIN":
             if self.database.conn is not None:
                 username, password = msg.split('#')
-                login_result = self.database.user_authentication(username, password)
+                login_result, login_fetched_data = self.database.user_authentication(username, password)
                 client_socket.send(build_message(login_result, "").encode())
+
+                # if user successfully authenticated, send current user data from db.
+                if len(login_fetched_data) != 0:
+                    client_socket.send(build_message(PROTOCOLS["client_db_info"], join_data(login_fetched_data)).encode())
 
         if cmd == "DB_CONNECTION_STATUS":
             if self.database.conn is not None:
@@ -87,6 +93,10 @@ class MultipleTCP:
                     client_socket.send(build_message(PROTOCOLS["database_status"], "ALIVE").encode())
             else:
                 client_socket.send(build_message(PROTOCOLS["database_status"], "DEAD").encode())
+
+        if cmd == "MESSAGE_TO_SERVER":
+            for client in self.ready_to_write:
+                client.send(build_message(PROTOCOLS["server_message"], msg).encode())
 
 server = MultipleTCP()
 server.setup()

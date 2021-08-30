@@ -14,10 +14,11 @@ PROTOCOLS = {
     "login_request": "LOGIN",
     "logout_request": "LOGOUT",
     "client_message": "MESSAGE_TO_SERVER",
+    "server_message": "MESSAGE_TO_CLIENT",
     "login_ok_msg": "LOGIN_OK",
     "login_failed_msg": "LOGIN_ERROR",
-    "server_message": "MESSAGE_TO_CLIENT",
-    "database_status": "DB_CONNECTION_STATUS"
+    "database_status": "DB_CONNECTION_STATUS",
+    "client_db_info": "CLIENT_INFO"
 
 }  # .. Add more commands if needed
 
@@ -95,7 +96,7 @@ def join_data(msg_fields):
     """
     msg = ""
     for word in msg_fields:
-        msg += DATA_DELIMITER + word
+        msg += DATA_DELIMITER + str(word)
 
     return msg[1:]
 

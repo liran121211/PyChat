@@ -51,14 +51,18 @@ class DBConnection:
         :param password: client (String) password
         :return: success message (Protocol), otherwise error message.
         """
-        sql_auth = "SELECT username FROM online_chat_db.users WHERE username = %s AND password = %s"
+        sql_auth = "SELECT * FROM online_chat_db.users WHERE username = %s AND password = %s"
         self.cursor.execute(sql_auth, (username, password))
-        sql_query = self.cursor.fetchall()
+        sql_query_result = self.cursor.fetchall()
 
         # check if given data exists in sql table
-        if len(sql_query) == 0:
-            return PROTOCOLS["login_failed_msg"]
-        return PROTOCOLS["login_ok_msg"]
+        if len(sql_query_result) == 0:
+            return PROTOCOLS["login_failed_msg"], []
+        return PROTOCOLS["login_ok_msg"], sql_query_result[0]
+
+    def sql_query(self, request):
+        if request == "CLIENT_INFO":
+            pass
 
     def close_connection(self):
         """
