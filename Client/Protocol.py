@@ -18,7 +18,8 @@ PROTOCOLS = {
     "login_ok_msg": "LOGIN_OK",
     "login_failed_msg": "LOGIN_ERROR",
     "database_status": "DB_CONNECTION_STATUS",
-    "client_db_info": "CLIENT_INFO"
+    "client_db_info": "CLIENT_INFO",
+    "online_users": "ONLINE_USERS",
 
 }  # .. Add more commands if needed
 
@@ -115,7 +116,9 @@ def debugMessages(key):
         "DB_CONNECTION_ERROR": "Connection to database could not be established.",
         "DB_OPERATION_ERROR": "Something went wrong with the database, try again later.",
         "CLIENT_DB_CONNECT": "Checking if database is up and running...",
-        "CLIENT_DB_CONNECTED": "Everything is ready!"
+        "CLIENT_DB_CONNECTED": "Everything is ready!",
+        "DB_UPDATE_QUERY_SUCCESS": "Database record updated successfully.",
+        "DB_UPDATE_QUERY_FAIL": "Database record could not be updated.",
 
     }
 

@@ -18,7 +18,7 @@ class ClientTCP(Observable):
         self.client_socket = None
         self.client_db_info = {}
         self.threads = {}
-        self.gui = None
+        self.app = None  # GUI Application
 
     def setup(self):
         """
@@ -60,7 +60,6 @@ class ClientTCP(Observable):
         while True:
             msg = self.client_socket.recv(self.max_msg_length).decode()
             self.serverTransmission(self.client_socket, parse_message(msg))
-            time.sleep(0.5)  # let client lookup for server responses every 0.5 sec
 
     def send_msg(self, cmd, msg):
         """
@@ -82,19 +81,21 @@ class ClientTCP(Observable):
         msg = message[1]
 
         if cmd == "CLIENT_INFO":
-            client_data = split_data(msg, 2)
+            client_data = split_data(msg, 4)
             self.client_db_info["id"] = client_data[0]
             self.client_db_info["username"] = client_data[1]
             self.client_db_info["password"] = client_data[2]
+            self.client_db_info["online"] = client_data[3]
+            self.client_db_info["ip_address"] = client_data[4]
 
         if cmd == "LOGIN_OK":
-            self.gui.LoginWindow.close()
+            self.app.LoginWindow.close()
             self.threads["CHAT_SCREEN"] = threading.Thread(target=self.ChatGUI)
             self.threads["CHAT_SCREEN"].start()
 
         if cmd == "LOGIN_ERROR":
-            self.gui.login_result.setText("Invalid username or password.")
-            self.gui.login_result.setStyleSheet("color: rgb(236, 31, 39);")
+            self.app.login_result.setText("Invalid username or password.")
+            self.app.login_result.setStyleSheet("color: rgb(236, 31, 39);")
             debugMessages("NOT_AUTHENTICATED")
 
         if cmd == "DB_CONNECTION_STATUS":
@@ -107,11 +108,15 @@ class ClientTCP(Observable):
             else:
                 self.notify("DB_CONNECTION_ERROR")
 
+        if cmd == "ONLINE_USERS":
+            # avoid wrong app gui
+            try:
+                self.app.updateUserList(msg.split("#"))
+            except AttributeError:
+                pass
+
         if cmd == "MESSAGE_TO_CLIENT":
-            self.gui.chat_update(msg)
-
-
-
+            self.app.updateChat(msg)
 
     def LoadingGUI(self):
         """
@@ -122,9 +127,9 @@ class ClientTCP(Observable):
         LoadingWindow = LoadingScreen.QtWidgets.QMainWindow()
         LoadingWindow.setWindowFlags(LoadingScreen.QtCore.Qt.FramelessWindowHint)
         LoadingWindow.setAttribute(LoadingScreen.QtCore.Qt.WA_TranslucentBackground)
-        self.gui = LoadingScreen.LoadingScreen()
-        self.gui.setupUi(LoadingWindow)
-        self.attach(self.gui)  # Attach LoadingScreen observer
+        self.app = LoadingScreen.LoadingScreen()
+        self.app.setupUi(LoadingWindow)
+        self.attach(self.app)  # Attach LoadingScreen observer
         self.notify("GRAPHICS_LOAD")
         LoadingWindow.show()
         LoadingScreen.sys.exit(app.exec_())
@@ -134,9 +139,9 @@ class ClientTCP(Observable):
         app = LoginScreen.QtWidgets.QApplication(LoginScreen.sys.argv)
         LoginWindow = LoginScreen.QtWidgets.QMainWindow()
         LoginWindow.setWindowFlags(LoginScreen.QtCore.Qt.FramelessWindowHint)
-        self.gui = LoginScreen.LoginScreen()
-        self.gui.setupUi(LoginWindow)
-        self.gui.attach(self)  # Attach Client observer to LoginScreen
+        self.app = LoginScreen.LoginScreen()
+        self.app.setupUi(LoginWindow)
+        self.app.attach(self)  # Attach Client observer to LoginScreen
         LoginWindow.show()
         LoginScreen.sys.exit(app.exec_())
 
@@ -146,14 +151,20 @@ class ClientTCP(Observable):
             pass
         app = MainChatScreen.QtWidgets.QApplication(MainChatScreen.sys.argv)
         MainChatWindow = MainChatScreen.QtWidgets.QMainWindow()
-        self.gui = MainChatScreen.MainChatScreen()
-        self.gui.client_data = self.client_db_info
-        self.gui.setupUi(MainChatWindow)
-        self.gui.attach(self)  # Attach Client observer to MainChatScreen
+        self.app = MainChatScreen.MainChatScreen()
+        self.app.client_data = self.client_db_info
+        self.app.setupUi(MainChatWindow)
+        self.app.attach(self)  # Attach Client observer to MainChatScreen
         MainChatWindow.show()
         MainChatScreen.sys.exit(app.exec_())
 
     def update(self, observable, data):
+        """
+        Client gets notify (observer) from GUI classes.
+        :param observable: gui object that being observed.
+        :param data: data to be handled.
+        :return: None.
+        """
         if isinstance(data, list):
             if len(data) > 0:
                 if data[0] == "LOGIN":
