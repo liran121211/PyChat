@@ -2,12 +2,10 @@ import socket
 import threading
 import time
 
-from PyQt5.QtCore import QThread
-
 from Observable import Observable
 from Protocol import *
 import LoadingScreen, LoginScreen, MainChatScreen
-
+import sys
 
 class ClientTCP(Observable):
     def __init__(self):
@@ -123,7 +121,7 @@ class ClientTCP(Observable):
         Graphic Interface of the Client.
         :return: None
         """
-        app = LoadingScreen.QtWidgets.QApplication(LoadingScreen.sys.argv)
+        app = LoadingScreen.QtWidgets.QApplication(sys.argv)
         LoadingWindow = LoadingScreen.QtWidgets.QMainWindow()
         LoadingWindow.setWindowFlags(LoadingScreen.QtCore.Qt.FramelessWindowHint)
         LoadingWindow.setAttribute(LoadingScreen.QtCore.Qt.WA_TranslucentBackground)
@@ -132,31 +130,31 @@ class ClientTCP(Observable):
         self.attach(self.app)  # Attach LoadingScreen observer
         self.notify("GRAPHICS_LOAD")
         LoadingWindow.show()
-        LoadingScreen.sys.exit(app.exec_())
+        sys.exit(app.exec_())
 
     def LoginGUI(self):
         time.sleep(0.5)
-        app = LoginScreen.QtWidgets.QApplication(LoginScreen.sys.argv)
+        app = LoginScreen.QtWidgets.QApplication(sys.argv)
         LoginWindow = LoginScreen.QtWidgets.QMainWindow()
         LoginWindow.setWindowFlags(LoginScreen.QtCore.Qt.FramelessWindowHint)
         self.app = LoginScreen.LoginScreen()
         self.app.setupUi(LoginWindow)
         self.app.attach(self)  # Attach Client observer to LoginScreen
         LoginWindow.show()
-        LoginScreen.sys.exit(app.exec_())
+        sys.exit(app.exec_())
 
     def ChatGUI(self):
         time.sleep(0.5)
         while len(self.client_db_info) == 0:
             pass
-        app = MainChatScreen.QtWidgets.QApplication(MainChatScreen.sys.argv)
+        app = MainChatScreen.QtWidgets.QApplication(sys.argv)
         MainChatWindow = MainChatScreen.QtWidgets.QMainWindow()
         self.app = MainChatScreen.MainChatScreen()
         self.app.client_data = self.client_db_info
         self.app.setupUi(MainChatWindow)
         self.app.attach(self)  # Attach Client observer to MainChatScreen
         MainChatWindow.show()
-        MainChatScreen.sys.exit(app.exec_())
+        sys.exit(app.exec_())
 
     def update(self, observable, data):
         """

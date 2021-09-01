@@ -13,7 +13,6 @@ from PyQt5.Qt import Qt
 from Protocol import PROTOCOLS
 from Observable import Observable
 import CSS.login_screen_css
-import sys
 
 
 class LoginScreen(Observable):

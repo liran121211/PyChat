@@ -2,7 +2,6 @@ import time
 
 from Protocol import debugMessages
 from PyQt5 import QtCore, QtGui, QtWidgets
-import sys
 import CSS.loading_screen_css
 
 class LoadingScreen(object):
