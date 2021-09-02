@@ -108,11 +108,8 @@ class ClientTCP(Observable):
                 self.notify("DB_CONNECTION_ERROR")
 
         if cmd == "ONLINE_USERS":
-            # avoid wrong app gui
-            try:
+            if self.app.name == "MainChatWindow":
                 self.app.updateUserList(msg.split("#"))
-            except AttributeError:
-                pass
 
         if cmd == "MESSAGE_TO_CLIENT":
             self.app.updateChat(msg)

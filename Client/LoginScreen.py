@@ -18,8 +18,8 @@ import CSS.login_screen_css
 class LoginScreen(Observable):
     def __init__(self):
         Observable.__init__(self)
+        self.name = "LoginWindow"
         self.LoginWindow = None
-
 
     def setupUi(self, LoginWindow):
         LoginWindow.setObjectName("LoginWindow")
@@ -224,18 +224,20 @@ class LoginScreen(Observable):
         self.cancel_button.setText(_translate("MainWindow", "Cancel"))
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return:
+        if event.key() == Qt.Key_Return and self.username_textfield.hasFocus() is True:
             self.login_button.click()
 
-        if event.key() == Qt.Key_Enter:
+        if event.key() == Qt.Key_Enter and self.password_textfield.hasFocus() is True:
             self.login_button.click()
 
         if event.key() == Qt.Key_Escape:
             exit(0)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton and self.username_textfield.hasFocus() is True:
             self.username_textfield.setText("")
+
+        if event.button() == Qt.LeftButton and self.password_textfield.hasFocus() is True:
             self.password_textfield.setText("")
 
     def login(self):

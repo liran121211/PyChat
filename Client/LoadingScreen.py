@@ -6,6 +6,7 @@ import CSS.loading_screen_css
 
 class LoadingScreen(object):
     def __init__(self):
+        self.name = "LoadingWindow"
         self.LoadingWindow = None
 
     def setupUi(self, LoadingWindow):
