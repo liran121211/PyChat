@@ -2,14 +2,14 @@ class Observable:
     def __init__(self):
         self._observers = []
 
-    def notify(self, data=None):
+    def notify(self, cmd, data=None):
         """
         Notify all observers.
         :param cmd: Identify by protocol with (command)
         :return: None.
         """
         for observer in self._observers:
-            observer.update(self, data)
+            observer.update(cmd, data)
 
     def attach(self, observer):
         """

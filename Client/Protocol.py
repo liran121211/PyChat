@@ -20,6 +20,7 @@ PROTOCOLS = {
     "database_status": "DB_CONNECTION_STATUS",
     "client_db_info": "CLIENT_INFO",
     "online_users": "ONLINE_USERS",
+    "chat_rooms_list": "CHAT_ROOMS_LIST",
 
 }  # .. Add more commands if needed
 
@@ -121,6 +122,6 @@ def debugMessages(key):
         "DB_UPDATE_QUERY_FAIL": "Database record could not be updated.",
 
     }
-
     print(msg_dict[key])
-    return (msg_dict[key])
+
+    return msg_dict[key]

@@ -12,11 +12,11 @@ import time
 import random
 
 import requests
-from PyQt5 import QtCore, QtGui, QtWidgets, QtSvg
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QIcon
 from PyQt5.QtSvg import QSvgWidget
-from PyQt5.QtWidgets import QFrame
+from PyQt5.QtWidgets import QFrame, QListWidgetItem
 
 from Protocol import *
 from Observable import Observable
@@ -24,10 +24,10 @@ import CSS.main_chat_screen_css
 
 
 class MainChatScreen(Observable):
-    def __init__(self):
+    def __init__(self, ClientTCP):
         self.name = "MainChatWindow"
         Observable.__init__(self)
-        self.client_data = None
+        self.client = ClientTCP
         self.user_list_model = None
         self.chat_history = ""
         self.threads = {}
@@ -38,42 +38,48 @@ class MainChatScreen(Observable):
         MainChatWindow.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.centralwidget = QtWidgets.QWidget(MainChatWindow)
         self.centralwidget.setObjectName("centralwidget")
+
         self.main_chat_textbox = QtWidgets.QTextBrowser(self.centralwidget)
         self.main_chat_textbox.setEnabled(True)
         self.main_chat_textbox.setGeometry(QtCore.QRect(330, 60, 1001, 631))
         self.main_chat_textbox.setObjectName("main_chat_textbox")
+
         self.users_list = QtWidgets.QListView(self.centralwidget)
         self.users_list.setGeometry(QtCore.QRect(1340, 60, 221, 681))
         self.users_list.setObjectName("users_list")
         self.users_list.setStyleSheet("background-color: rgb(243, 243, 243);\n"
                                       "border-radius: 10px;\ncolor: rgb(95, 95, 95);\n")
-        self.users_list.setSpacing(5)
         self.chat_rooms_list = QtWidgets.QListView(self.centralwidget)
         self.chat_rooms_list.setGeometry(QtCore.QRect(10, 0, 311, 691))
         self.chat_rooms_list.setObjectName("chat_rooms_list")
+        self.users_list.setSpacing(5)
+
         self.message_textfield = QtWidgets.QLineEdit(self.centralwidget)
         self.message_textfield.setGeometry(QtCore.QRect(350, 700, 931, 41))
-
+        self.message_textfield.setStyleSheet("background-color: rgb(243, 243, 243);\n"
+                                             "border-radius: 10px;\n"
+                                             "color: rgb(95, 95, 95);")
+        self.message_textfield.setClearButtonEnabled(False)
+        self.message_textfield.setObjectName("message_textfield")
         font = QtGui.QFont()
         font.setFamily("Comic Sans MS")
         font.setPointSize(13)
         font.setBold(False)
         font.setWeight(50)
         self.message_textfield.setFont(font)
-        self.message_textfield.setStyleSheet("background-color: rgb(243, 243, 243);\n"
-                                             "border-radius: 10px;\n"
-                                             "color: rgb(95, 95, 95);")
-        self.message_textfield.setClearButtonEnabled(False)
-        self.message_textfield.setObjectName("message_textfield")
+
         self.user_avatar = QSvgWidget(self.centralwidget)
         self.user_avatar.setGeometry(20, 710, 61, 41)
         self.user_avatar.setObjectName("user_avatar")
+
         self.username_label = QtWidgets.QLabel(self.centralwidget)
         self.username_label.setGeometry(QtCore.QRect(80, 710, 61, 41))
         self.username_label.setObjectName("username_label")
+
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
         self.label_3.setGeometry(QtCore.QRect(150, 720, 61, 21))
         self.label_3.setObjectName("label_3")
+
         self.send_button = QtWidgets.QPushButton(self.centralwidget)
         self.send_button.setGeometry(QtCore.QRect(1290, 710, 31, 21))
         self.send_button.setContextMenuPolicy(Qt.DefaultContextMenu)
@@ -83,6 +89,7 @@ class MainChatScreen(Observable):
                                        "")
         self.send_button.setAutoDefault(False)
         self.send_button.setObjectName("send_button")
+
         self.textfield_label_right = QtWidgets.QLabel(self.centralwidget)
         self.textfield_label_right.setObjectName(u"textfield_label_right")
         self.textfield_label_right.setGeometry(QtCore.QRect(1270, 700, 61, 41))
@@ -90,21 +97,20 @@ class MainChatScreen(Observable):
                                                  "border-radius: 10px;\n"
                                                  "color: rgb(95, 95, 95);")
         self.textfield_label_right.setFrameShape(QFrame.NoFrame)
-
         self.textfield_label_left = QtWidgets.QLabel(self.centralwidget)
         self.textfield_label_left.setObjectName(u"textfield_label_left")
+        self.textfield_label_left.setFrameShape(QFrame.NoFrame)
         self.textfield_label_left.setGeometry(QtCore.QRect(330, 700, 61, 41))
         self.textfield_label_left.setStyleSheet(u"background-color: rgb(243, 243, 243);\n"
                                                 "border-radius: 10px;\n"
                                                 "color: rgb(95, 95, 95);")
-        self.textfield_label_left.setFrameShape(QFrame.NoFrame)
 
-        MainChatWindow.setCentralWidget(self.centralwidget)
         self.toolbar_frame = QFrame(self.centralwidget)
         self.toolbar_frame.setObjectName(u"toolbar_frame")
         self.toolbar_frame.setGeometry(QtCore.QRect(330, 0, 1231, 51))
         self.toolbar_frame.setFrameShape(QFrame.Box)
         self.toolbar_frame.setFrameShadow(QFrame.Raised)
+
         self.settings_frame = QFrame(self.centralwidget)
         self.settings_frame.setObjectName(u"settings_frame")
         self.settings_frame.setGeometry(QtCore.QRect(19, 700, 301, 51))
@@ -122,10 +128,12 @@ class MainChatScreen(Observable):
         self.textfield_label_left.raise_()
         self.message_textfield.raise_()
 
+        MainChatWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainChatWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1574, 21))
         self.menubar.setObjectName("menubar")
         MainChatWindow.setMenuBar(self.menubar)
+
         self.statusbar = QtWidgets.QStatusBar(MainChatWindow)
         self.statusbar.setObjectName("statusbar")
         MainChatWindow.setStatusBar(self.statusbar)
@@ -134,11 +142,9 @@ class MainChatScreen(Observable):
 
         # other specifications
         self.username_label.setText(self.client_data["username"])
-        self.user_avatar.renderer().load(getAvatar(username=self.client_data["username"], type="SVG"))
-
+        self.user_avatar.renderer().load(getAvatar(username=self.client_data["username"], obj_type="SVG"))
         self.send_button.clicked.connect(self.sendMessage)
         self.message_textfield.textEdited.connect(self.messageFieldStatus)
-        # self.message_textfield.textChanged.c
         MainChatWindow.keyPressEvent = self.keyPressEvent
         self.initQListView()
 
@@ -179,12 +185,12 @@ class MainChatScreen(Observable):
         font.setPointSize(13)
         font.setBold(False)
         font.setWeight(50)
+        self.users_list.setFont(font)
 
         user_avatar = QtCore.QSize()
         user_avatar.setHeight(40)
         user_avatar.setWidth(40)
         self.users_list.setIconSize(user_avatar)
-        self.users_list.setFont(font)
 
     def updateUserList(self, user_lst):
         """
@@ -214,7 +220,7 @@ class MainChatScreen(Observable):
             """
             for username in filtered_users:
                 item = QStandardItem(username)
-                item.setIcon(getAvatar(username=username, type="QICON"))
+                item.setIcon(getAvatar(username=username, obj_type="QICON"))
                 item.setEditable(False)
                 rgb = randomColor()
                 item.setForeground(QtGui.QColor(rgb[0], rgb[1], rgb[2]))
@@ -224,6 +230,25 @@ class MainChatScreen(Observable):
 
         self.threads["FILTER_DUPLICATED_USER_LIST"] = threading.Thread(target=filterDuplicates)
         self.threads["FILTER_DUPLICATED_USER_LIST"].start()
+
+    def updateRoomsList(self, rooms):
+        """
+        Update QListView widget and show the available chat rooms.
+        :param rooms: list of rooms in the database
+        :return: None
+        """
+        self.chat_rooms_list_model = QStandardItemModel(self.chat_rooms_list)  # define model structure for QListView
+        font = QtGui.QFont()
+        font.setFamily("Comic Sans MS")
+        font.setPointSize(13)
+        font.setBold(False)
+        font.setWeight(50)
+        self.chat_rooms_list.setFont(font)
+        for room in rooms:
+            self.chat_rooms_list_model.appendRow(QStandardItem(room))
+
+        self.chat_rooms_list.setModel(self.chat_rooms_list_model)
+        self.chat_rooms_list.update()
 
     def buttonStatus(self, mode):
         if mode:
@@ -238,20 +263,22 @@ class MainChatScreen(Observable):
                                            "")
 
 
-def getAvatar(username, type):
+def getAvatar(username, obj_type):
     """
     Fetch unique avatar image for every user from online resource
     :param username: username (String)
+    :param obj_type: type of obj to be returned.
     :return: QIcon obj, svg (ByteArray)
     """
     image_url = 'https://api.multiavatar.com/{0}.svg?apikey=bj5N7ftocy9dzF'.format(username)
     pixmap_obj = QPixmap()
     svg_data = requests.get(image_url).content
     pixmap_obj.loadFromData(svg_data)
-    if type == "QICON":
+
+    if obj_type == "QICON":
         return QIcon(pixmap_obj)
 
-    if type == "SVG":
+    if obj_type == "SVG":
         return bytearray(svg_data.decode(), encoding='utf-8')
 
 
@@ -268,4 +295,11 @@ def randomColor():
         [128, 128, 64],
         [234, 209, 555],
     ]
-    return rgb_color[random.randint(0,9)]
+    return rgb_color[random.randint(0, 9)]
+
+def run(ClientTCP):
+    # window = QtWidgets.QMainWindow()
+    # LSF = MainChatScreen(ClientTCP= ClientTCP)
+    # LSF.setupUi(window)
+    # window.show()
+    print("MAIN_SCREEN_WINDOW")
