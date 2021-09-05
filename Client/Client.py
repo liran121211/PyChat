@@ -75,12 +75,13 @@ class ClientTCP(Observable):
                 self.notify("DB_CONNECTION_ERROR")
 
         if cmd == "CLIENT_INFO":
-            client_data = split_data(msg, 4)
+            client_data = split_data(msg, 5)
             self.client_db_info["id"] = client_data[0]
             self.client_db_info["username"] = client_data[1]
             self.client_db_info["password"] = client_data[2]
             self.client_db_info["online"] = client_data[3]
             self.client_db_info["ip_address"] = client_data[4]
+            self.client_db_info["avatar"] = client_data[5]
 
         if cmd == "LOGIN_OK":
             self.notify("LOGIN_OK")
