@@ -15,9 +15,9 @@ from datetime import datetime
 import requests
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QModelIndex, QAbstractListModel, QSize, QMargins, pyqtSignal
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QIcon, QColor
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPixmap, QIcon, QColor, QBrush, QPen
 from PyQt5.QtSvg import QSvgWidget
-from PyQt5.QtWidgets import QFrame, QApplication, QStyledItemDelegate
+from PyQt5.QtWidgets import QFrame, QApplication, QStyledItemDelegate, QStyle
 
 from ThreadWorker import ThreadWorker
 from Protocol import *
@@ -31,7 +31,6 @@ class MainChatScreen(Observable):
         Observable.__init__(self)
         self.client = ClientTCP
         self.client.attach(self)
-        self.user_list_model = None
         self.chat_history = ""
         self.threads = {}
         self.thread_worker = ThreadWorker()
@@ -62,7 +61,9 @@ class MainChatScreen(Observable):
         self.users_list = QtWidgets.QListView(self.centralwidget)
         self.users_list.setGeometry(QtCore.QRect(1340, 60, 221, 681))
         self.users_list.setObjectName("users_list")
-        self.users_list.setSpacing(5)
+        self.users_list.setItemDelegate(OnlineUsersDelegate())
+        self.users_list_model = OnlineUsersModel()
+        self.users_list.setModel(self.users_list_model)
         self.users_list.setStyleSheet("background-color: rgb(243, 243, 243);\n"
                                       "border-radius: 10px;\ncolor: rgb(95, 95, 95);\n")
 
@@ -156,7 +157,6 @@ class MainChatScreen(Observable):
         self.send_button.clicked.connect(self.sendMessage)
         self.message_textfield.textEdited.connect(self.messageFieldStatus)
         MainChatWindow.keyPressEvent = self.keyPressEvent
-        self.initQListView()
 
     def retranslateUi(self, MainChatWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -171,7 +171,7 @@ class MainChatScreen(Observable):
         :return: None
         """
         if notif == "ONLINE_USERS":
-            self.updateUserList(data.split("#"))
+            self.updateUserList(data)
 
         if notif == "MESSAGE_TO_CLIENT":
             self.updateChat(data)
@@ -185,7 +185,7 @@ class MainChatScreen(Observable):
 
     def sendMessage(self):
         if self.message_textfield.text() != "":
-            dispatch_data = self.username_label.text()+'#'+self.message_textfield.text()
+            dispatch_data = self.username_label.text() + '#' + self.message_textfield.text().replace('#','')
             self.sendButtonStatus(False)
             self.client.send_msg(PROTOCOLS["client_message"], dispatch_data)
             self.message_textfield.setText("")
@@ -200,55 +200,17 @@ class MainChatScreen(Observable):
         if event.key() == Qt.Key_Return and self.message_textfield.hasFocus() is True:
             self.sendMessage()
 
-    def initQListView(self):
-        self.user_list_model = QStandardItemModel(self.users_list)  # define model structure for QListView
-        self.users_list.setFont(createFont("Eras Medium ITC", 13, False, 50))
-        user_avatar = QtCore.QSize()
-        user_avatar.setHeight(40)
-        user_avatar.setWidth(40)
-        self.users_list.setIconSize(user_avatar)
-
     def updateUserList(self, online_users):
         """
         Update QListView widget and show the online users only.
         :param online_users: list of users that have ('online'=True) in the database
         :return: None
         """
-
-        def filterDuplicates():
-            """
-            Filter all users from list that are already logged in.
-            :return: None
-            """
-            if self.user_list_model is not None:
-                count_users = self.user_list_model.rowCount()
-                current_users = [self.user_list_model.item(index).text() for index in range(count_users)]
-
-                if current_users != online_users:
-                    self.user_list_model.clear()
-                    self.threads["REFRESH_USER_LIST"] = threading.Thread(target=refresh, args=(online_users,))
-                    self.threads["REFRESH_USER_LIST"].start()
-
-        def refresh(online_users):
-            """
-            Refresh the QListView widget with the filtered list.
-            :param online_users: filtered user list.
-            :return: None
-            """
-            for username in online_users:
-                rgb = randomColor()
-                item = QStandardItem(username)
-                item.setEditable(False)
-                item.setForeground(QtGui.QColor(rgb[0], rgb[1], rgb[2]))
-                item.setIcon(fetchAvatar(username=username, obj_type="QICON"))
-                self.user_list_model.appendRow(item)
-
-            self.users_list.setModel(self.user_list_model)
-            self.users_list.update()
-            self.thread_worker.terminate()
-
-        self.threads["QLISTVIEW_FILTER"] = threading.Thread(target=filterDuplicates)
-        self.threads["QLISTVIEW_FILTER"].start()
+        decoded_users = online_users.split('##')
+        for user in decoded_users:
+            decoded_user = user.split('#')
+            username, avatar, status = decoded_user[0], decoded_user[1], decoded_user[2]
+            self.users_list_model.add_user(username=username, username_color=randomColor(), status=status)
 
     def updateRoomsList(self, rooms):
         """
@@ -329,6 +291,72 @@ class MessageDelegate(QStyledItemDelegate):
         return rect.size()
 
 
+class OnlineUsersDelegate(QStyledItemDelegate):
+    def __init__(self):
+        QStyledItemDelegate.__init__(self)
+        self.default_margins = QMargins(60, 33, 25, 15)
+
+    def paint(self, painter, option, index) -> None:
+        # MouseOver event (background color)
+        if option.state & QStyle.State_MouseOver:
+            painter.fillRect(option.rect, QBrush(QColor(128, 128, 255, 10)))
+
+        # retrieve the data sent to the model.
+        username, username_color, status, = index.model().data(index, Qt.DisplayRole)
+        avatar_image = index.model().data(index, Qt.DecorationRole)
+
+        # paint [username] text proprieties
+        username_rect = QtCore.QRectF(option.rect.x() + 60, option.rect.y() + 15, option.rect.width(),
+                                      option.rect.height())
+        R, G, B = username_color[0], username_color[1], username_color[2]
+        painter.setPen(QColor(R, G, B))
+        painter.setFont(createFont("Eras Medium ITC", 14, False, 50))
+        painter.drawText(username_rect, Qt.TextWordWrap, str(username))
+
+        # paint [avatar image] proprieties
+        avatar_rect = QtCore.QRectF(option.rect.x() + 10, option.rect.y() + 10, 40, 40)
+        painter.drawImage(avatar_rect, avatar_image)
+
+        # paint [status] proprieties
+        status_rect = QtCore.QRectF(avatar_rect.x() + 10, avatar_rect.y() + 10, 40, 40)
+        painter.setPen(QPen(Qt.white, 3, Qt.SolidLine))
+        if status == "AVAILABLE":
+            painter.setBrush(QBrush(QColor(59, 165, 93), Qt.SolidPattern))
+            painter.drawEllipse(status_rect.x() + 15, status_rect.y() + 15, 15, 15)
+
+        if status == "AWAY":
+            painter.setBrush(QBrush(QColor(250, 168, 26), Qt.SolidPattern))
+            painter.drawEllipse(status_rect.x() + 15, status_rect.y() + 15, 15, 15)
+
+        if status == "UNAVAILABLE":
+            painter.setBrush(QBrush(QColor(237, 66, 69), Qt.SolidPattern))
+            painter.drawEllipse(status_rect.x() + 15, status_rect.y() + 15, 15, 15)
+
+        # paint [about] text proprieties
+        about_rect = QtCore.QRectF(username_rect.x(), username_rect.y() + 20, 400, 50)
+        painter.setFont(createFont("Eras Medium ITC", 10, False, 50))
+        painter.setPen(Qt.gray)
+        about = None
+
+        if status == "AVAILABLE":
+            about = "I'm available now :)"
+
+        if status == "AWAY":
+            about = "I'll be back soon"
+
+        if status == "UNAVAILABLE":
+            about = "Do not disturb me"
+        painter.drawText(about_rect, Qt.TextWordWrap, about)
+
+    def sizeHint(self, option, index) -> QSize:
+        _, _, about_message = index.model().data(index, Qt.DisplayRole)
+        metrics = QApplication.fontMetrics()
+        rect = option.rect.marginsRemoved(self.default_margins)
+        rect = metrics.boundingRect(rect, Qt.TextWordWrap, about_message)
+        rect = rect.marginsAdded(self.default_margins)  # Re add padding for item size.
+        return rect.size()
+
+
 class MessagesModel(QAbstractListModel):
     layoutChanged = pyqtSignal()
 
@@ -341,8 +369,8 @@ class MessagesModel(QAbstractListModel):
             return self.messages_data[index.row()]
 
         if role == Qt.DecorationRole:
-            username1 = self.messages_data[index.row()][0]
-            return fetchAvatar(username=username1, obj_type="QIMAGE", k=0).smoothScaled(40, 40)
+            username = self.messages_data[index.row()][0]
+            return fetchAvatar(username=username, obj_type="QIMAGE", k=0).smoothScaled(40, 40)
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
         return len(self.messages_data)
@@ -353,6 +381,36 @@ class MessagesModel(QAbstractListModel):
 
             # trigger refresh of model.
             self.layoutChanged.emit()
+
+
+class OnlineUsersModel(QAbstractListModel):
+    layoutChanged = pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        super(OnlineUsersModel, self).__init__(*args, **kwargs)
+        self.users_data = []
+        self.avatar = fetchAvatar("Extarminator", "QIMAGE", 1).smoothScaled(40, 40)
+
+    def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
+        if role == Qt.DisplayRole:
+            return self.users_data[index.row()]
+
+        if role == Qt.DecorationRole:
+            return self.avatar
+
+    def rowCount(self, parent: QModelIndex = ...) -> int:
+        return len(self.users_data)
+
+    def add_user(self, username: str, username_color: list, status: str):
+        if not any(username in users for users in self.users_data):
+            self.users_data.append((username, username_color, status))
+
+            # trigger refresh of model.
+            self.layoutChanged.emit()
+
+    def remove_user(self, index):
+        self.users_data.pop(index)
+        self.layoutChanged.emit()
 
 
 def fetchAvatar(username: str, obj_type: typing.Any, k=0):
@@ -419,7 +477,6 @@ def createFont(fontFamily=None, PointSize=None, Bold=None, Weight=None):
     font.setPointSize(PointSize)
     font.setBold(Bold)
     font.setWeight(Weight)
-
     return font
 
 

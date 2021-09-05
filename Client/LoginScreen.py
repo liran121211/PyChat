@@ -225,7 +225,7 @@ class LoginScreen(Observable):
         self.cancel_button.clicked.connect(exit)
 
         ###########
-        self.username_textfield.setText("@Extarminator")
+        self.username_textfield.setText("Extarminator")
         self.password_textfield.setText("1")
         ##########
 
