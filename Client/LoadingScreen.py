@@ -1,21 +1,24 @@
 import random
 import threading
 import time
+import sys
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import Qt
+
+import Client
 from ThreadWorker import ThreadWorker
 from Protocol import debugMessages
-from Client import ClientTCP
 import LoginScreen
 
 # noinspection PyUnresolvedReferences
-import CSS.loading_screen_css
-import sys
+import StyleSheets.loading_screen_css
+
 
 
 class LoadingScreen(object):
     def __init__(self):
-        self.client = ClientTCP()
+        self.client = Client.ClientTCP()
         self.thread_worker = ThreadWorker()
         self.client.attach(self)
 
@@ -24,8 +27,8 @@ class LoadingScreen(object):
         LoadingWindow.setObjectName("LoadingWindow")
         LoadingWindow.setStyleSheet("")
         LoadingWindow.setFixedSize(672, 395)
-        LoadingWindow.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-        LoadingWindow.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        LoadingWindow.setWindowFlags(Qt.FramelessWindowHint)
+        LoadingWindow.setAttribute(Qt.WA_TranslucentBackground)
         self.centralwidget = QtWidgets.QWidget(LoadingWindow)
         self.centralwidget.setObjectName("centralwidget")
 
