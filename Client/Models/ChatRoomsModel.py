@@ -1,9 +1,13 @@
 import random
+import sys
 import typing
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 # noinspection PyUnresolvedReferences
-from Misc import fetchAvatar, fetchIcon
+from Misc import fetchAvatar, fetchIcon, catchErrors
+
+sys._excepthook = sys.excepthook
+sys.excepthook = catchErrors
 
 
 class ChatRoomItem(object):
@@ -45,11 +49,17 @@ class ChatRoomItem(object):
         self._children.append(child)
         self._columns_count = max(child.columnCount(), self._columns_count)
 
+    def removeChild(self, child):
+        self._row = len(self._children) - 1
+        self._children.remove(child)
+        self._columns_count = max(child.columnCount(), self._columns_count)
+        child._parent = None
+
 
 class ChatRoomsModel(QAbstractItemModel):
     def __init__(self, nodes):
         QAbstractItemModel.__init__(self)
-        self.chat_rooms_icons = {}
+        self.rooms_icons = {}
         self._root = ChatRoomItem(None)
         for node in nodes:
             self._root.addChild(node)
@@ -109,9 +119,63 @@ class ChatRoomsModel(QAbstractItemModel):
             return node.data(index.column()), rooms_data
 
         if role == Qt.DecorationRole:
-            try:
-                if node.data(0) in rooms_data.keys():
-                    return self.chat_rooms_icons[node.data(0)]
-            except KeyError:
-                self.chat_rooms_icons[node.data(0)] = fetchIcon(index=random.randint(0, 35))
-                return self.chat_rooms_icons[node.data(0)]
+            return self.rooms_icons[node.data(0)]
+
+    def addRoom(self, node: ChatRoomItem) -> ChatRoomItem:
+        """
+        Add new room to the rooms list.
+        :param node: room (ChatRoomItem).
+        :return: room (node) itself.
+        """
+        self.beginInsertRows(QModelIndex(), self._root.childCount(), self._root.childCount())
+        self.addChild(node, QModelIndex())
+        self.endInsertRows()
+        return node
+
+    def findRoom(self, room_name: str) -> ChatRoomItem:
+        """
+        Find room (node) by its name.
+        :param room_name: String room name.
+        :return: room (ChatRoomItem)
+        """
+        for index in range(self._root.childCount()):
+            if room_name == self._root.child(index).data(0):
+                return self._root.child(index)
+        raise ValueError("Room does not exist")
+
+    def addUser(self, node: ChatRoomItem, room_name: str) -> None:
+        """
+        Add user to the given room (node) parameter.
+        :param node: user (node).
+        :param room_name: (String) room name.
+        :return: None.
+        """
+        selected_room = self.findRoom(room_name)
+        self.beginInsertRows(QModelIndex(), selected_room.childCount(), selected_room.childCount())
+        selected_room.addChild(node)
+        self.endInsertRows()
+
+    def findUser(self, username: str) -> (ChatRoomItem, int):
+        """
+        Find user by given (username) parameter.
+        :param username: (String) username
+        :return: user (ChatRoomItem), index (int)
+        """
+        for room_index in range(self._root.childCount()):
+            users_count = self._root.child(room_index).childCount()
+            for user_index in range(users_count):
+                user_node = self._root.child(room_index).child(user_index)
+                if username == user_node.data(0):
+                    return user_node, user_index
+        raise ValueError("User does not exist")
+
+    def removeUser(self, username: str) -> None:
+        """
+        Remove user from the room.
+        :param username: (String) username
+        :return: None
+        """
+        user_node, user_index = self.findUser(username)
+        self.beginRemoveRows(QModelIndex(), user_index, user_index)
+        user_node.parent().removeChild(user_node)
+        self.endRemoveRows()

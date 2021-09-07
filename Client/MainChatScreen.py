@@ -18,7 +18,7 @@ from Delegates.ChatRoomsDelegate import ChatRoomsDelegate
 from Models.MessagesModel import MessagesModel
 from Models.OnlineUsersModel import OnlineUsersModel
 from Models.ChatRoomsModel import ChatRoomsModel, ChatRoomItem
-from Misc import randomColor, createFont, timeStamp, fetchAvatar
+from Misc import randomColor, createFont, timeStamp, fetchAvatar, fetchIcon
 from ThreadWorker import ThreadWorker
 from Protocol import *
 from Observable import Observable
@@ -157,7 +157,7 @@ class MainChatScreen(Observable):
         QtCore.QMetaObject.connectSlotsByName(MainChatWindow)
 
         # other specifications
-        self.client.send_msg(PROTOCOLS["chat_rooms_list"], "")
+        self.client.send_msg(PROTOCOLS["chat_rooms_names"], "")
         self.username_label.setText(self.client.client_db_info["username"])
         self.user_avatar.renderer().load(fetchAvatar(username=self.client.client_db_info["username"], obj_type="SVG"))
         self.send_button.clicked.connect(self.sendMessage)
@@ -185,8 +185,11 @@ class MainChatScreen(Observable):
             if self.finished_loading is True:
                 self.updateChat(data)
 
-        if notif == "CHAT_ROOMS_LIST":
-            self.updateRoomsList(data.split("#"))
+        if notif == "CHAT_ROOMS_NAMES":
+            self.initRoomsList(data)
+
+        if notif == "CHAT_ROOMS_INFO":
+            self.updateRoomsList(data)
 
     def updateChat(self, data):
         username, message = data.split('#')
@@ -237,20 +240,31 @@ class MainChatScreen(Observable):
             elif online == 'False':
                 self.users_list_model.removeData(username)
 
-    def updateRoomsList(self, rooms):
+    def initRoomsList(self, data):
         """
-        Update QListView widget and show the available chat rooms.
-        :param rooms: list of rooms in the database
+        Load chat rooms list with their icons.
+        :param data: pair room name and icon list.
         :return: None
         """
-        nodes = []
-        # Set some random data:
-        for room in rooms:
-            nodes.append(ChatRoomItem(room))
-        nodes[0].addChild(ChatRoomItem(['@Extarminator']))
-        nodes[0].addChild(ChatRoomItem(['@Tamar']))
-        self.chat_rooms_list_model = ChatRoomsModel(nodes)
+        # init data structures.
+        rooms_nodes = []
+        rooms_icons = {}
+
+        # decode data into lists
+        decoded_data = [value.split('#') for value in data.split('##')]
+
+        # for each room name create (ChatRoomItem) node, fetch room icon.
+        for row in decoded_data:
+            rooms_nodes.append(ChatRoomItem(row[0]))
+            rooms_icons[row[0]] = fetchIcon(row[1])
+
+        # init model and send the data.
+        self.chat_rooms_list_model = ChatRoomsModel(rooms_nodes)
+        self.chat_rooms_list_model.rooms_icons = rooms_icons
         self.chat_rooms_list.setModel(self.chat_rooms_list_model)
+
+    def updateRoomsList(self, data):
+        print(data)
 
     def sendButtonStatus(self, mode):
         if mode:

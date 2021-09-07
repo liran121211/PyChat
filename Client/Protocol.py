@@ -20,7 +20,8 @@ PROTOCOLS = {
     "database_status": "DB_CONNECTION_STATUS",
     "client_db_info": "CLIENT_INFO",
     "online_users": "ONLINE_USERS",
-    "chat_rooms_list": "CHAT_ROOMS_LIST",
+    "chat_rooms_names": "CHAT_ROOMS_NAMES",
+    "chat_rooms_info": "CHAT_ROOMS_INFO"
 
 }  # .. Add more commands if needed
 

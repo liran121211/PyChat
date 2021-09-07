@@ -75,7 +75,7 @@ class ClientTCP(Observable):
                 self.notify("DB_CONNECTION_ERROR")
 
         if cmd == "CLIENT_INFO":
-            client_data = split_data(msg, 6)
+            client_data = split_data(msg, 7)
             self.client_db_info["id"] = client_data[0]
             self.client_db_info["username"] = client_data[1]
             self.client_db_info["password"] = client_data[2]
@@ -83,6 +83,7 @@ class ClientTCP(Observable):
             self.client_db_info["ip_address"] = client_data[4]
             self.client_db_info["avatar"] = client_data[5]
             self.client_db_info["status"] = client_data[6]
+            self.client_db_info["room"] = client_data[7]
 
         if cmd == "LOGIN_OK":
             self.notify("LOGIN_OK")
@@ -98,8 +99,11 @@ class ClientTCP(Observable):
         if cmd == "MESSAGE_TO_CLIENT":
             self.notify("MESSAGE_TO_CLIENT", msg)
 
-        if cmd == "CHAT_ROOMS_LIST":
-            self.notify("CHAT_ROOMS_LIST", msg)
+        if cmd == "CHAT_ROOMS_NAMES":
+            self.notify("CHAT_ROOMS_NAMES", msg)
+
+        if cmd == "CHAT_ROOMS_INFO":
+            self.notify("CHAT_ROOMS_INFO", msg)
 
     def update(self, observable, data):
         """

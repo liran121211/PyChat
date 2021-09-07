@@ -1,85 +1,90 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+"""
+TODO: handle changing data.
+"""
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QComboBox, QPushButton
+import sys
+import typing
+
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtCore import QModelIndex, Qt, QRect, QMetaObject, QCoreApplication, QAbstractItemModel
+from PyQt5.QtWidgets import QWidget, QMenuBar, QStatusBar
+from Models.ChatRoomsModel import ChatRoomsModel, ChatRoomItem
+from Delegates.ChatRoomsDelegate import ChatRoomsDelegate
+from MainChatScreen import fetchAvatar
 
 
-class Model(QtCore.QAbstractListModel):
-    def __init__(self, *args, **kwargs):
-        QtCore.QAbstractListModel.__init__(self, *args, **kwargs)
-        self.items = []
+class Ui_MainWindow(object):
+    def __init__(self):
+        self.nodes = []
+        self.rooms_list = ['-----General-----', '-----NadezdaLand-----', '-----Entshuldi?-----',
+                           '-----TovAzBye...Bye!!-----']
+        # Set some random data:
+        for room in self.rooms_list:
+            self.nodes.append(ChatRoomItem(room))
+        self.nodes[0].addChild(ChatRoomItem(['@Extarminator']))
+        self.nodes[0].addChild(ChatRoomItem(['@Tamar']))
 
-    def rowCount(self, parent=QtCore.QModelIndex()):
-        return len(self.items)
+    def setupUi(self, MainWindow):
+        if not MainWindow.objectName():
+            MainWindow.setObjectName(u"MainWindow")
+        MainWindow.resize(800, 600)
+        self.centralwidget = QWidget(MainWindow)
+        self.centralwidget.setObjectName(u"centralwidget")
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QMenuBar(MainWindow)
+        self.menubar.setObjectName(u"menubar")
+        self.menubar.setGeometry(QRect(0, 0, 800, 21))
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QStatusBar(MainWindow)
+        self.statusbar.setObjectName(u"statusbar")
+        MainWindow.setStatusBar(self.statusbar)
 
-    def data(self, index, role=Qt.DisplayRole):
-        if index.isValid() is True:
-            if role == Qt.DisplayRole:
-                return QtCore.QVariant(self.items[index.row()])
-            elif role == QtCore.Qt.ItemDataRole:
-                return QtCore.QVariant(self.items[index.row()])
-        return QtCore.QVariant()
+        self.tw = QtWidgets.QTreeView(self.centralwidget)
+        self.tw.setGeometry(QtCore.QRect(10, 0, 311, 691))
+        self.tw.setStyleSheet("background-color: rgb(243, 243, 243);\n"
+                              "border-radius: 10px;\ncolor: rgb(95, 95, 95);\n")
+        self.tw.setItemDelegate(ChatRoomsDelegate())
+        self.tw_model = ChatRoomsModel(self.nodes)
+        self.tw.setModel(self.tw_model)
+        self.tw.setHeaderHidden(True)
 
-    def itemsAdded(self, items):
-        # insert items into their sorted position
-        items = sorted(items)
-        row = 0
-        while row < len(self.items) and len(items) > 0:
-            if items[0] < self.items[row]:
-                self.beginInsertRows(QtCore.QModelIndex(), row, row)
-                self.items.insert(row, items.pop(0))
-                self.endInsertRows()
-                row += 1
-            row += 1
-        # add remaining items to end of the list
-        if len(items) > 0:
-            self.beginInsertRows(QtCore.QModelIndex(), len(self.items), len(self.items) + len(items) - 1)
-            self.items.extend(items)
-            self.endInsertRows()
+        self.button = QtWidgets.QPushButton(self.centralwidget)
+        self.button.setGeometry(QtCore.QRect(400, 0, 100, 50))
+        self.button.setText("ADD ITEM")
+        self.button.clicked.connect(self.insertData)
 
-    def itemsRemoved(self, items):
-        # remove items from the list
-        for item in items:
-            for row in range(0, len(self.items)):
-                if self.items[row] == item:
-                    self.beginRemoveRows(QtCore.QModelIndex(), row, row)
-                    self.items.pop(row)
-                    self.endRemoveRows()
-                    break
+        self.retranslateUi(MainWindow)
+        QMetaObject.connectSlotsByName(MainWindow)
 
-def main():
-    app = QApplication([])
-    w = QWidget()
-    w.resize(300,200)
-    layout = QVBoxLayout()
+    # setupUi
 
-    model = Model()
-    model.itemsAdded(['a','b','d','e'])
+    def insertData(self):
+        rootIdx = self.tw_model.index(0, 0, QtCore.QModelIndex())
+        # Pick an insert location for a new node. This should be based on some input. For example
+        # the location of a mouse click or the last element if we are appending. In this example
+        # I have hard coded a value.
+        position = 3
+        # Create a new node called and give it a name
+        new = ChatRoomItem("new")
+        # Add a child node to the node which contains the value we want to display.
+        # new.addChild(ChatRoomItem(['1', '2', '3']))
 
-    combobox = QComboBox()
-    combobox.setModel(model)
-    combobox.setCurrentIndex(3)
-    layout.addWidget(combobox)
+        # self.tw_model.beginInsertRows(rootIdx, 3, 0)
+        # self.tw_model.addChild(ChatRoomItem(['1']), self.tw_model.index(1,0,QtCore.QModelIndex()))
+        # self.tw_model.endInsertRows()
+        # self.tw_model.addRoom(ChatRoomItem(['1']))
+        #self.tw_model.addUser(ChatRoomItem("nigga"), "-----General1-----")
+        self.tw_model.removeUser("@Extarminator")
+        self.tw_model.removeUser("@Tamar")
 
-    def insertC(self):
-        model.itemsAdded('c')
+    def retranslateUi(self, MainWindow):
+        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
+    # retranslateUi
 
-    def removeC(self):
-        model.itemsRemoved('c')
 
-    buttonInsert = QPushButton('Insert "c"')
-    buttonInsert.clicked.connect(insertC)
-    layout.addWidget(buttonInsert)
-
-    buttonRemove = QPushButton('Remove "c"')
-    buttonRemove.clicked.connect(removeC)
-    layout.addWidget(buttonRemove)
-
-    w.setLayout(layout)
-    w.show()
-    app.exec_()
-
-if __name__ == '__main__':
-    main()
+app = QtWidgets.QApplication(sys.argv)
+window = QtWidgets.QMainWindow()
+LSF = Ui_MainWindow()
+LSF.setupUi(window)
+window.show()
+sys.exit(app.exec_())

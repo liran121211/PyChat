@@ -1,4 +1,5 @@
 import random
+import sys
 import typing
 from datetime import datetime
 import requests
@@ -76,22 +77,22 @@ def fetchAvatar(username: str, obj_type: typing.Any, k=0):
         return svg_data
 
 
-def fetchIcon(index=None):
+def fetchIcon(name=None):
     """
     Fetch unique avatar image for every user from online resource
-    :param index: icon (int) index.
+    :param name: icon (String) name.
     :return: QImage
     """
-    ICONS_LIST = ['Candy Cane', 'Christmas Ball', 'Christmas Candle', 'Christmas Candy', 'Christmas Gift',
-                  'Christmas Mitten', 'Christmas Penguin', 'Christmas Star', 'Christmas Stocking', 'Christmas Tree',
-                  'Church', 'Cinnamon Sticks', 'Cookies', 'Cruse', 'Dreidel', 'Fireplace', 'Firework',
-                  'Gingerbread House', 'Gingerbread Man', 'Hanukkah Donut', 'Hanukkah Gelt', 'Hanukkah Glass',
-                  'Hanukkah', 'Holy Bible', 'Ice Skate', 'Jingle Bell', 'Lantern', 'Pie', 'Reindeer', 'Santa', 'Scarf',
-                  'Skiing', 'Sled', 'Sleigh', 'Snow Storm', 'Snowman', 'Star of Bethlehem', 'Star of David',
-                  'Synagogue' 'Winter']
-
-    image_url = 'http://167.172.181.78/chat_icons/{0}.svg'.format(ICONS_LIST[index])
+    image_url = 'http://167.172.181.78/chat_icons/{0}'.format(name)
     svg_data = requests.get(image_url).content
     pixmap_obj = QPixmap()
     pixmap_obj.loadFromData(svg_data)
     return pixmap_obj.toImage()
+
+
+def catchErrors(exctype, value, traceback):
+    # Print the error and traceback
+    print(exctype, value, traceback)
+    # Call the normal Exception hook after
+    sys._excepthook(exctype, value, traceback)
+    sys.exit(1)
