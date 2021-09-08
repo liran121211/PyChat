@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 
 from Observable import Observable
 from Protocol import *
@@ -13,6 +14,7 @@ class ClientTCP(Observable):
         self.max_msg_length = 2048
         self.client_socket = None
         self.client_db_info = {}
+        self.waiting_db_connection = False
 
     def setup(self):
         """
@@ -34,6 +36,10 @@ class ClientTCP(Observable):
 
             self.notify("CLIENT_DB_CONNECT")
             self.send_msg(PROTOCOLS["database_status"], "")
+
+            while self.waiting_db_connection is False:
+                self.send_msg(PROTOCOLS["database_status"], "")
+                time.sleep(0.5)
 
         except ConnectionError:
             self.notify("TIMEOUT")
@@ -71,6 +77,7 @@ class ClientTCP(Observable):
         if cmd == "DB_CONNECTION_STATUS":
             if msg == "ALIVE":
                 self.notify("CLIENT_DB_CONNECTED")
+                self.waiting_db_connection = True
             else:
                 self.notify("DB_CONNECTION_ERROR")
 
@@ -94,7 +101,7 @@ class ClientTCP(Observable):
             debugMessages("NOT_AUTHENTICATED")
 
         if cmd == "ONLINE_USERS":
-            self.notify("ONLINE_USERS",msg)
+            self.notify("ONLINE_USERS", msg)
 
         if cmd == "MESSAGE_TO_CLIENT":
             self.notify("MESSAGE_TO_CLIENT", msg)
@@ -104,17 +111,6 @@ class ClientTCP(Observable):
 
         if cmd == "CHAT_ROOMS_INFO":
             self.notify("CHAT_ROOMS_INFO", msg)
-
-    def update(self, observable, data):
-        """
-        Client gets notify (observer) from GUI classes.
-        :param observable: gui object that being observed.
-        :param data: data to be handled.
-        :return: None.
-        """
-        if "MESSAGE_TO_SERVER" in data:
-            cmd, msg = parse_message(data)
-            self.send_msg(cmd, msg)
 
 
 if __name__ == "__main__":

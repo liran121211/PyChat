@@ -1,4 +1,3 @@
-import random
 import sys
 import typing
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
@@ -106,7 +105,11 @@ class ChatRoomsModel(QAbstractItemModel):
     def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
         # Rooms Nodes: self._root.
         # Users Nodes in room (x): self._root.child(x)
+
+        # current (MouseOver) data.
         node = index.internalPointer()
+
+        # create dictionary of [room: users]
         rooms_data = {}
         for room in range(self._root.childCount()):
             users = []
@@ -119,7 +122,11 @@ class ChatRoomsModel(QAbstractItemModel):
             return node.data(index.column()), rooms_data
 
         if role == Qt.DecorationRole:
-            return self.rooms_icons[node.data(0)]
+            # filter Decoration if the (node) is username, and accept only room names.
+            try:
+                return self.rooms_icons[node.data(0)]
+            except KeyError:
+                return None
 
     def addRoom(self, node: ChatRoomItem) -> ChatRoomItem:
         """
@@ -132,7 +139,7 @@ class ChatRoomsModel(QAbstractItemModel):
         self.endInsertRows()
         return node
 
-    def findRoom(self, room_name: str) -> ChatRoomItem:
+    def findRoom(self, room_name: str) -> ChatRoomItem or None:
         """
         Find room (node) by its name.
         :param room_name: String room name.
@@ -141,7 +148,7 @@ class ChatRoomsModel(QAbstractItemModel):
         for index in range(self._root.childCount()):
             if room_name == self._root.child(index).data(0):
                 return self._root.child(index)
-        raise ValueError("Room does not exist")
+        return None
 
     def addUser(self, node: ChatRoomItem, room_name: str) -> None:
         """
@@ -155,27 +162,40 @@ class ChatRoomsModel(QAbstractItemModel):
         selected_room.addChild(node)
         self.endInsertRows()
 
-    def findUser(self, username: str) -> (ChatRoomItem, int):
+    def findUser(self, username: str, room_name: str = None) -> (ChatRoomItem, int) or None:
         """
         Find user by given (username) parameter.
-        :param username: (String) username
-        :return: user (ChatRoomItem), index (int)
+        :param username: (String) username.
+        :param room_name: (String) room name.
+        :return: user (ChatRoomItem), index (int).
         """
-        for room_index in range(self._root.childCount()):
-            users_count = self._root.child(room_index).childCount()
+
+        # search user in all rooms available.
+        if room_name is None:
+            for room_index in range(self._root.childCount()):
+                users_count = self._root.child(room_index).childCount()
+                for user_index in range(users_count):
+                    user_node = self._root.child(room_index).child(user_index)
+                    if username == user_node.data(0):
+                        return user_node, user_index
+        else:
+            # search user inside the given room name.
+            room_node = self.findRoom(room_name)
+            users_count = room_node.childCount()
             for user_index in range(users_count):
-                user_node = self._root.child(room_index).child(user_index)
+                user_node = room_node.child(user_index)
                 if username == user_node.data(0):
                     return user_node, user_index
-        raise ValueError("User does not exist")
+        return None
 
     def removeUser(self, username: str) -> None:
         """
-        Remove user from the room.
+        Remove user from the current room.
         :param username: (String) username
         :return: None
         """
-        user_node, user_index = self.findUser(username)
-        self.beginRemoveRows(QModelIndex(), user_index, user_index)
-        user_node.parent().removeChild(user_node)
-        self.endRemoveRows()
+        if self.findUser(username) is not None:
+            user_node, user_index = self.findUser(username)
+            self.beginRemoveRows(QModelIndex(), user_index, user_index)
+            user_node.parent().removeChild(user_node)
+            self.endRemoveRows()

@@ -21,7 +21,8 @@ PROTOCOLS = {
     "client_db_info": "CLIENT_INFO",
     "online_users": "ONLINE_USERS",
     "chat_rooms_names": "CHAT_ROOMS_NAMES",
-    "chat_rooms_info": "CHAT_ROOMS_INFO"
+    "chat_rooms_info": "CHAT_ROOMS_INFO",
+    "change_user_room": "CHANGE_USER_ROOM"
 
 }  # .. Add more commands if needed
 

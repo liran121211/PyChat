@@ -74,6 +74,7 @@ class MainChatScreen(Observable):
         self.chat_rooms_list.setObjectName("chat_rooms_list")
         self.chat_rooms_list.setItemDelegate(ChatRoomsDelegate())
         self.chat_rooms_list.setHeaderHidden(True)
+        self.chat_rooms_list.doubleClicked.connect(self.userChangedRoom)
         self.chat_rooms_list.setStyleSheet("background-color: rgb(243, 243, 243);\n"
                                            "border-radius: 10px;\ncolor: rgb(95, 95, 95);\n")
 
@@ -264,7 +265,32 @@ class MainChatScreen(Observable):
         self.chat_rooms_list.setModel(self.chat_rooms_list_model)
 
     def updateRoomsList(self, data):
-        print(data)
+        """
+        Update the entire chat rooms from the updated data given by the server.
+        :param data:  encoded (user, room) tuples.
+        :return: None
+        """
+        try:
+            # decode data into lists
+            decoded_data = [value.split('#') for value in data.split('##')]
+
+            # move each user the the room that is specified in the (data) given.
+            for row in decoded_data:
+                if self.chat_rooms_list_model.findUser(row[0], row[1]) is None:
+                    self.chat_rooms_list_model.removeUser(row[0])
+                    self.chat_rooms_list_model.addUser(ChatRoomItem(row[0]), row[1])
+        except AttributeError:
+            pass
+
+    def userChangedRoom(self, index):
+        """
+        Moving a user to a room that has been double-clicked.
+        :param index: current clicked node (ChatRoomItem) object.
+        :return: None
+        """
+        clicked_item = index.data(0)[0]
+        if self.chat_rooms_list_model.findRoom(clicked_item) is not None:
+            self.client.send_msg(PROTOCOLS["change_user_room"], clicked_item + '#' + self.username_label.text())
 
     def sendButtonStatus(self, mode):
         if mode:

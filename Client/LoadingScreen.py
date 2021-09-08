@@ -15,7 +15,6 @@ import LoginScreen
 import StyleSheets.loading_screen_css
 
 
-
 class LoadingScreen(object):
     def __init__(self):
         self.client = Client.ClientTCP()
@@ -94,7 +93,7 @@ class LoadingScreen(object):
 
     # noinspection PyUnresolvedReferences
     def update(self, notif, data):
-        time.sleep(random.uniform(0.2,1))
+        time.sleep(random.uniform(0.2, 1))
         if notif == "GRAPHICS_LOAD":
             self.thread_worker.progress.emit(10)
             self.loading_label.setText(debugMessages(notif))
@@ -113,6 +112,10 @@ class LoadingScreen(object):
             self.loading_label.setText(debugMessages(notif))
 
         if notif == "CLIENT_DB_CONNECT":
+            self.thread_worker.progress.emit(90)
+            self.loading_label.setText(debugMessages(notif))
+
+        if notif == "RETRY_DB_CONNECTION":
             self.thread_worker.progress.emit(90)
             self.loading_label.setText(debugMessages(notif))
 
