@@ -112,6 +112,11 @@ class ClientTCP(Observable):
         if cmd == "CHAT_ROOMS_INFO":
             self.notify("CHAT_ROOMS_INFO", msg)
 
+        if cmd == "BOT_USER_LOGGED_IN":
+            self.notify("BOT_USER_LOGGED_IN", msg)
+
+        if cmd == "BOT_USER_LOGGED_OUT":
+            self.notify("BOT_USER_LOGGED_OUT", msg)
 
 if __name__ == "__main__":
     client = ClientTCP()

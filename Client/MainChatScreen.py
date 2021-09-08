@@ -10,7 +10,7 @@
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtSvg import QSvgWidget
-from PyQt5.QtWidgets import QFrame
+from PyQt5.QtWidgets import QFrame, QMessageBox
 
 from Delegates.MessageDelegate import MessageDelegate
 from Delegates.OnlineUsersDelegate import OnlineUsersDelegate
@@ -32,7 +32,6 @@ class MainChatScreen(Observable):
         Observable.__init__(self)
         self.client = ClientTCP
         self.client.attach(self)
-        self.chat_history = ""
         self.threads = {}
         self.thread_worker = ThreadWorker()
         self.finished_loading = False
@@ -61,7 +60,7 @@ class MainChatScreen(Observable):
         self.main_chat.setModel(self.main_chat_model)
 
         self.users_list = QtWidgets.QListView(self.centralwidget)
-        self.users_list.setGeometry(QtCore.QRect(1340, 60, 221, 681))
+        self.users_list.setGeometry(QtCore.QRect(1340, 95, 221, 647))
         self.users_list.setObjectName("users_list")
         self.users_list.setItemDelegate(OnlineUsersDelegate())
         self.users_list_model = OnlineUsersModel()
@@ -69,14 +68,34 @@ class MainChatScreen(Observable):
         self.users_list.setStyleSheet("background-color: rgb(243, 243, 243);\n"
                                       "border-radius: 10px;\ncolor: rgb(95, 95, 95);\n")
 
+        self.users_list_label = QtWidgets.QLabel(self.centralwidget)
+        self.users_list_label.setObjectName(u"users_list_label")
+        self.users_list_label.setText("-----------Online Users-----------")
+        self.users_list_label.setAlignment(Qt.AlignCenter)
+        self.users_list_label.setFont(createFont("Eras Medium ITC", 15, False, 50))
+        self.users_list_label.setGeometry(QtCore.QRect(1340, 60, 221, 50))
+        self.users_list_label.setStyleSheet(u"background-color: rgb(243, 243, 243);\n"
+                                                 "border-radius: 10px;\n"
+                                                 "color: rgb(95, 95, 95);")
+
         self.chat_rooms_list = QtWidgets.QTreeView(self.centralwidget)
-        self.chat_rooms_list.setGeometry(QtCore.QRect(10, 0, 311, 691))
+        self.chat_rooms_list.setGeometry(QtCore.QRect(10, 50, 311, 641))
         self.chat_rooms_list.setObjectName("chat_rooms_list")
         self.chat_rooms_list.setItemDelegate(ChatRoomsDelegate())
         self.chat_rooms_list.setHeaderHidden(True)
         self.chat_rooms_list.doubleClicked.connect(self.userChangedRoom)
         self.chat_rooms_list.setStyleSheet("background-color: rgb(243, 243, 243);\n"
                                            "border-radius: 10px;\ncolor: rgb(95, 95, 95);\n")
+
+        self.chat_rooms_list_label = QtWidgets.QLabel(self.centralwidget)
+        self.chat_rooms_list_label.setObjectName(u"chat_rooms_list_label")
+        self.chat_rooms_list_label.setText("--------------------Chat Rooms--------------------")
+        self.chat_rooms_list_label.setAlignment(Qt.AlignCenter)
+        self.chat_rooms_list_label.setFont(createFont("Eras Medium ITC", 15, False, 50))
+        self.chat_rooms_list_label.setGeometry(QtCore.QRect(10, 0, 311, 65))
+        self.chat_rooms_list_label.setStyleSheet(u"background-color: rgb(243, 243, 243);\n"
+                                                 "border-radius: 10px;\n"
+                                                 "color: rgb(95, 95, 95);")
 
         self.message_textfield = QtWidgets.QLineEdit(self.centralwidget)
         self.message_textfield.setGeometry(QtCore.QRect(350, 700, 931, 41))
@@ -140,6 +159,8 @@ class MainChatScreen(Observable):
 
         self.message_textfield.raise_()
         self.main_chat.raise_()
+        self.chat_rooms_list.raise_()
+        self.users_list.raise_()
         self.send_button.raise_()
         self.user_avatar.raise_()
         self.username_label.raise_()
@@ -158,6 +179,7 @@ class MainChatScreen(Observable):
         QtCore.QMetaObject.connectSlotsByName(MainChatWindow)
 
         # other specifications
+        self.main_window.closeEvent = self.closeEvent
         self.client.send_msg(PROTOCOLS["chat_rooms_names"], "")
         self.username_label.setText(self.client.client_db_info["username"])
         self.user_avatar.renderer().load(fetchAvatar(username=self.client.client_db_info["username"], obj_type="SVG"))
@@ -192,6 +214,12 @@ class MainChatScreen(Observable):
         if notif == "CHAT_ROOMS_INFO":
             self.updateRoomsList(data)
 
+        if notif == "BOT_USER_LOGGED_IN":
+            self.updateChat(data)
+
+        if notif == "BOT_USER_LOGGED_OUT":
+            self.updateChat(data)
+
     def updateChat(self, data):
         username, message = data.split('#')
         model_index = self.main_chat_model.index(self.main_chat_model.rowCount(), 0)
@@ -199,7 +227,8 @@ class MainChatScreen(Observable):
 
     def sendMessage(self):
         if self.message_textfield.text() != "":
-            dispatch_data = self.username_label.text() + '#' + self.message_textfield.text().replace('#', '')
+            dispatch_data = self.client.client_db_info["username"] + '#' + self.message_textfield.text().replace('#',
+                                                                                                                 '')
             self.sendButtonStatus(False)
             self.client.send_msg(PROTOCOLS["client_message"], dispatch_data)
             self.message_textfield.setText("")
@@ -309,6 +338,18 @@ class MainChatScreen(Observable):
             self.sound_button.setStyleSheet("image: url(:/main_mute/mute.png);")
         else:
             self.sound_button.setStyleSheet("image: url(:/main_volume/volume.png);")
+
+    def closeEvent(self, event):
+        msgBox = QMessageBox()
+        msgBox.setText("You will no longer be a part of the chat, Are you sure? ")
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msgBox.setDefaultButton(QMessageBox.Yes)
+        if msgBox.exec_() == QMessageBox.Yes:
+            self.client.send_msg(PROTOCOLS["bot_user_logged_out"], self.client.client_db_info["username"])
+            event.accept()
+        else:
+            event.ignore()
+
 
 
 def run(ClientTCP):

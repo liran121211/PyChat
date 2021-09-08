@@ -18,19 +18,22 @@ class ChatRoomsDelegate(QStyledItemDelegate):
 
         # paint username text proprieties
         painter.setPen(Qt.black)
-        room_rect = QRectF(option.rect.x() + 25, option.rect.y(), option.rect.width()+20, option.rect.height())
+        room_rect = QRectF(option.rect.x() + 33, option.rect.y() + 8, option.rect.width(), option.rect.height())
         painter.setFont(createFont("Eras Medium ITC", 14, False, 50))
-        painter.drawText(room_rect, Qt.TextWordWrap, str(current_data))
+        if current_data not in rooms_list:
+            painter.drawText(room_rect, Qt.TextWordWrap, '@' + str(current_data))
+        else:
+            painter.drawText(room_rect, Qt.TextWordWrap, str(current_data))
 
         # paint avatar image proprieties
         if current_data in rooms_list:
-            avatar_rect = QRectF(option.rect.x(), option.rect.y() + 5, 20, 20)
+            avatar_rect = QRectF(option.rect.x(), option.rect.y() + 5, 30, 30)
             painter.drawImage(avatar_rect, avatar)
 
     def sizeHint(self, option, index) -> QSize:
-        room_name,rooms_list = index.model().data(index, Qt.DisplayRole)
+        _, _ = index.model().data(index, Qt.DisplayRole)
         metrics = QApplication.fontMetrics()
         rect = option.rect.marginsRemoved(self.default_margins)
-        rect = metrics.boundingRect(rect, Qt.TextWordWrap, room_name)
+        rect = metrics.boundingRect(rect, Qt.TextWordWrap, "Chamber Of Secrets")
         rect = rect.marginsAdded(self.default_margins)  # Re add padding for item size.
         return rect.size()

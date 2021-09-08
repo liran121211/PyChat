@@ -22,7 +22,9 @@ PROTOCOLS = {
     "online_users": "ONLINE_USERS",
     "chat_rooms_names": "CHAT_ROOMS_NAMES",
     "chat_rooms_info": "CHAT_ROOMS_INFO",
-    "change_user_room": "CHANGE_USER_ROOM"
+    "change_user_room": "CHANGE_USER_ROOM",
+    "bot_user_logged_in": "BOT_USER_LOGGED_IN",
+    "bot_user_logged_out": "BOT_USER_LOGGED_OUT",
 
 }  # .. Add more commands if needed
 

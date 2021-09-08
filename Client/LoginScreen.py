@@ -274,8 +274,13 @@ class LoginScreen(Observable):
             self.login_result.setText(" ")
 
         if notif == "LOGIN_OK":
+            # notification to BOT
+            self.client.send_msg(PROTOCOLS["bot_user_logged_in"], self.username_textfield.text())
+
             # Send beacon to load the MainChatScreen
             self.thread_worker.finished.emit(100)
+
+
 
     def loadMainChatWindow(self):
         self.thread_worker.terminate()
