@@ -3,7 +3,7 @@ import sys
 import typing
 from datetime import datetime
 import requests
-from PyQt5.QtGui import QFont, QPixmap, QIcon, QImage
+from PyQt5.QtGui import QFont, QPixmap, QIcon
 
 
 def randomColor():
@@ -73,11 +73,14 @@ def fetchAvatar(username: str, obj_type: typing.Any, k=0):
     if obj_type == "QIMAGE":
         return pixmap_obj.toImage()
 
+    if obj_type == "PIXMAP":
+        return pixmap_obj
+
     if obj_type is None:
         return svg_data
 
 
-def fetchIcon(name=None):
+def fetchIcon(name):
     """
     Fetch unique avatar image for every user from online resource
     :param name: icon (String) name.
@@ -88,6 +91,18 @@ def fetchIcon(name=None):
     pixmap_obj = QPixmap()
     pixmap_obj.loadFromData(svg_data)
     return pixmap_obj.toImage()
+
+
+def fetchAppIcon() -> QIcon:
+    """
+    Fetch app icon for every window created.
+    :return: QIcon
+    """
+    image_url = 'http://167.172.181.78/app_icon/pyc-32x32.png'
+    svg_data = requests.get(image_url).content
+    pixmap_obj = QPixmap()
+    pixmap_obj.loadFromData(svg_data)
+    return QIcon(pixmap_obj)
 
 
 def catchErrors(exctype, value, traceback):

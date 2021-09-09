@@ -10,6 +10,8 @@ import threading
 import time
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
+from Misc import fetchAppIcon
 from ThreadWorker import ThreadWorker
 from Observable import Observable
 from Protocol import PROTOCOLS
@@ -34,7 +36,8 @@ class LoginScreen(Observable):
         self.thread_worker.start()
 
         LoginWindow.setObjectName("LoginWindow")
-        LoginWindow.resize(678, 582)
+        LoginWindow.setFixedSize(678, 582)
+        LoginWindow.setWindowIcon(fetchAppIcon())
         LoginWindow.setMinimumSize(QtCore.QSize(678, 582))
         LoginWindow.setMaximumSize(QtCore.QSize(678, 582))
         LoginWindow.setWindowOpacity(1.0)
@@ -227,7 +230,7 @@ class LoginScreen(Observable):
 
     def retranslateUi(self, login_screen):
         _translate = QtCore.QCoreApplication.translate
-        login_screen.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        login_screen.setWindowTitle(_translate("Welcome to PyChat", "Welcome to PyChat"))
         self.label_3.setText(_translate("MainWindow", "Login Zone"))
         self.username_textfield.setText(_translate("MainWindow", "Your Username..."))
         self.password_textfield.setText(_translate("MainWindow", "password"))
@@ -280,14 +283,11 @@ class LoginScreen(Observable):
             # Send beacon to load the MainChatScreen
             self.thread_worker.finished.emit(100)
 
-
-
     def loadMainChatWindow(self):
         self.thread_worker.terminate()
         self.main_window.close()
         self.client.detach(self)
         MainChatScreen.run(ClientTCP=self.client)
-
 
 def run(ClientTCP):
     window = QtWidgets.QMainWindow()

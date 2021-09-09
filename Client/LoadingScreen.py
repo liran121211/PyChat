@@ -7,6 +7,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 
 import Client
+from Misc import fetchAppIcon
 from ThreadWorker import ThreadWorker
 from Protocol import debugMessages
 import LoginScreen
@@ -26,6 +27,7 @@ class LoadingScreen(object):
         LoadingWindow.setObjectName("LoadingWindow")
         LoadingWindow.setStyleSheet("")
         LoadingWindow.setFixedSize(672, 395)
+        LoadingWindow.setWindowIcon(fetchAppIcon())
         LoadingWindow.setWindowFlags(Qt.FramelessWindowHint)
         LoadingWindow.setAttribute(Qt.WA_TranslucentBackground)
         self.centralwidget = QtWidgets.QWidget(LoadingWindow)
@@ -88,7 +90,7 @@ class LoadingScreen(object):
 
     def retranslateUi(self, LoadingWindow):
         _translate = QtCore.QCoreApplication.translate
-        LoadingWindow.setWindowTitle(_translate("LoadingWindow", "MainWindow"))
+        LoadingWindow.setWindowTitle(_translate("Initializing PyChat...", "Initializing PyChat..."))
         self.loading_label.setText(_translate("LoadingWindow", "Loading text area....."))
 
     # noinspection PyUnresolvedReferences

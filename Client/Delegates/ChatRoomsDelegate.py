@@ -1,6 +1,6 @@
-from PyQt5 import QtCore
 from PyQt5.QtCore import QMargins, Qt, QRectF, QSize
-from PyQt5.QtWidgets import QStyledItemDelegate, QApplication, QWidget
+from PyQt5.QtGui import QBrush, QColor
+from PyQt5.QtWidgets import QStyledItemDelegate, QApplication, QStyle
 
 # noinspection PyUnresolvedReferences
 from Misc import createFont
@@ -15,6 +15,10 @@ class ChatRoomsDelegate(QStyledItemDelegate):
         # retrieve the data sent to the model.
         current_data, rooms_list = index.model().data(index, Qt.DisplayRole)
         avatar = index.model().data(index, Qt.DecorationRole)
+
+        # MouseOver event (background color)
+        if option.state & QStyle.State_MouseOver:
+            painter.fillRect(option.rect, QBrush(QColor(128, 128, 255, 10)))
 
         # paint username text proprieties
         painter.setPen(Qt.black)

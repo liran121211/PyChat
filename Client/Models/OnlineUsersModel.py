@@ -22,10 +22,10 @@ class OnlineUsersModel(QAbstractListModel):
         return len(self.users_data)
 
     def insertData(self, index: QModelIndex, value: typing.Any) -> None:
-        self.beginInsertRows(index, self.rowCount(), self.rowCount())
         if not any(value[0] in users for users in self.users_data):
+            self.beginInsertRows(index, self.rowCount(), self.rowCount())
             self.users_data.append((value[0], value[1], value[2]))
-        self.endInsertRows()
+            self.endInsertRows()
 
     def removeData(self, value: typing.Any) -> None:
         for row in range(0, len(self.users_data)):
