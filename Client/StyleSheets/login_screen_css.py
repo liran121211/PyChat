@@ -8,6 +8,12 @@
 
 from PyQt5 import QtCore
 
+LOGIN_BTN = """QPushButton{ color: white; background-color: rgb(58, 134, 255); border-radius: 20px;}"""
+
+CANCEL_BTN = """QPushButton{ color: white; background-color: rgb(236, 31, 39); border-radius: 20px;}"""
+
+
+WAITING_BTN = """QPushButton{ color: white; background-color: rgb(176, 176, 176); border-radius: 20px;}"""
 qt_resource_data = b"\
 \x00\x01\xae\xfd\
 \xff\
@@ -11453,10 +11459,13 @@ else:
     rcc_version = 2
     qt_resource_struct = qt_resource_struct_v2
 
+
 def qInitResources():
     QtCore.qRegisterResourceData(rcc_version, qt_resource_struct, qt_resource_name, qt_resource_data)
 
+
 def qCleanupResources():
     QtCore.qUnregisterResourceData(rcc_version, qt_resource_struct, qt_resource_name, qt_resource_data)
+
 
 qInitResources()

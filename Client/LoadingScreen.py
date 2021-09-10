@@ -7,6 +7,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 
 import Client
+from timeit import default_timer as timer
 from Misc import fetchAppIcon
 from ThreadWorker import ThreadWorker
 from Protocol import debugMessages
@@ -116,6 +117,7 @@ class LoadingScreen(object):
         if notif == "CLIENT_DB_CONNECT":
             self.thread_worker.progress.emit(90)
             self.loading_label.setText(debugMessages(notif))
+
 
         if notif == "RETRY_DB_CONNECTION":
             self.thread_worker.progress.emit(90)

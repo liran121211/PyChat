@@ -3,7 +3,7 @@ import typing
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 # noinspection PyUnresolvedReferences
-from Misc import fetchAvatar, fetchIcon, catchErrors
+from Misc import catchErrors
 
 sys._excepthook = sys.excepthook
 sys.excepthook = catchErrors

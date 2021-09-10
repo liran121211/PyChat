@@ -14,7 +14,7 @@ class ClientTCP(Observable):
         self.max_msg_length = 2048
         self.client_socket = None
         self.client_db_info = {}
-        self.waiting_db_connection = False
+        self.db_waiting_response = True
 
     def setup(self):
         """
@@ -35,11 +35,9 @@ class ClientTCP(Observable):
             threading.Thread(target=self.recv_msg).start()
 
             self.notify("CLIENT_DB_CONNECT")
-            self.send_msg(PROTOCOLS["database_status"], "")
-
-            while self.waiting_db_connection is False:
+            while self.db_waiting_response:
                 self.send_msg(PROTOCOLS["database_status"], "")
-                time.sleep(0.5)
+                time.sleep(1)
 
         except ConnectionError:
             self.notify("TIMEOUT")
@@ -77,12 +75,12 @@ class ClientTCP(Observable):
         if cmd == "DB_CONNECTION_STATUS":
             if msg == "ALIVE":
                 self.notify("CLIENT_DB_CONNECTED")
-                self.waiting_db_connection = True
             else:
                 self.notify("DB_CONNECTION_ERROR")
+            self.db_waiting_response = False
 
         if cmd == "CLIENT_INFO":
-            client_data = split_data(msg, 7)
+            client_data = split_data(msg, 8)
             self.client_db_info["id"] = client_data[0]
             self.client_db_info["username"] = client_data[1]
             self.client_db_info["password"] = client_data[2]
@@ -91,6 +89,7 @@ class ClientTCP(Observable):
             self.client_db_info["avatar"] = client_data[5]
             self.client_db_info["status"] = client_data[6]
             self.client_db_info["room"] = client_data[7]
+            self.client_db_info["color"] = client_data[8]
 
         if cmd == "LOGIN_OK":
             self.notify("LOGIN_OK")
@@ -117,6 +116,9 @@ class ClientTCP(Observable):
 
         if cmd == "BOT_USER_LOGGED_OUT":
             self.notify("BOT_USER_LOGGED_OUT", msg)
+
+        if cmd == "REPLACE_USER_AVATAR":
+            self.notify("REPLACE_USER_AVATAR", msg)
 
 if __name__ == "__main__":
     client = ClientTCP()

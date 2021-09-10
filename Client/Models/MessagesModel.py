@@ -21,7 +21,7 @@ class MessagesModel(QAbstractListModel):
             try:
                 return self.users_avatars[username]
             except KeyError:
-                self.users_avatars[username] = fetchAvatar(username=username, obj_type="QIMAGE", k=0).smoothScaled(40,                                                                                                   40)
+                self.users_avatars[username] = fetchAvatar(username=username, obj_type="QIMAGE").smoothScaled(40,                                                                                                   40)
                 return self.users_avatars[username]
 
     def rowCount(self, parent: QModelIndex = ...) -> int:

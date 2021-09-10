@@ -19,7 +19,7 @@ from PyQt5.Qt import Qt
 import MainChatScreen
 
 # noinspection PyUnresolvedReferences
-import StyleSheets.login_screen_css
+from StyleSheets.login_screen_css import *
 
 
 class LoginScreen(Observable):
@@ -28,6 +28,7 @@ class LoginScreen(Observable):
         self.client = ClientTCP
         self.client.attach(self)
         self.thread_worker = ThreadWorker()
+        self.__login_waiting_response = True
 
     def setupUi(self, LoginWindow):
         self.main_window = LoginWindow
@@ -113,11 +114,7 @@ class LoginScreen(Observable):
         self.username_line.setObjectName("username_line")
         self.login_button = QtWidgets.QPushButton(self.centralwidget)
         self.login_button.setGeometry(QtCore.QRect(70, 250, 111, 41))
-        self.login_button.setStyleSheet("QPushButton{\n"
-                                        "    color: white;\n"
-                                        "    background-color: rgb(58, 134, 255);\n"
-                                        "    border-radius: 20px;\n"
-                                        "}")
+        self.login_button.setStyleSheet(LOGIN_BTN)
         self.login_button.setObjectName("login_button")
         self.forgot_password_link_button = QtWidgets.QCommandLinkButton(self.centralwidget)
         self.forgot_password_link_button.setGeometry(QtCore.QRect(80, 320, 201, 41))
@@ -151,11 +148,7 @@ class LoginScreen(Observable):
         self.signin_label.setObjectName("signin_label")
         self.cancel_button = QtWidgets.QPushButton(self.centralwidget)
         self.cancel_button.setGeometry(QtCore.QRect(190, 250, 111, 41))
-        self.cancel_button.setStyleSheet("QPushButton{\n"
-                                         "    color: white;\n"
-                                         "    background-color: rgb(236, 31, 39);\n"
-                                         "    border-radius: 20px;\n"
-                                         "}")
+        self.cancel_button.setStyleSheet(CANCEL_BTN)
         self.cancel_button.setObjectName("cancel_button")
         self.password_line = QtWidgets.QFrame(self.centralwidget)
         self.password_line.setEnabled(True)
@@ -226,7 +219,7 @@ class LoginScreen(Observable):
         self.cancel_button.clicked.connect(exit)
 
         self.username_textfield.setText("Extarminator")
-        self.password_textfield.setText("1")
+        self.password_textfield.setText("GreatPassword")
 
     def retranslateUi(self, login_screen):
         _translate = QtCore.QCoreApplication.translate
@@ -263,20 +256,27 @@ class LoginScreen(Observable):
             self.password_textfield.setText("")
 
     def login(self):
-        cmd = PROTOCOLS["login_request"]
-        username = self.username_textfield.text()
-        password = self.password_textfield.text()
-        self.client.send_msg(cmd, username + "#" + password)
+        self.login_button.setDisabled(True)
+        self._login_waiting_response = True
+        while self._login_waiting_response:
+            cmd = PROTOCOLS["login_request"]
+            username = self.username_textfield.text()
+            password = self.password_textfield.text()
+            self.client.send_msg(cmd, username + "#" + password)
 
     # noinspection PyUnresolvedReferences
     def update(self, notif, data):
         if notif == "LOGIN_ERROR":
+            self.login_button.setDisabled(False)
+            self._login_waiting_response = False
             self.login_result.setText("Invalid username or password.")
             self.login_result.setStyleSheet("color: rgb(236, 31, 39);")
             time.sleep(0.5)
             self.login_result.setText(" ")
 
         if notif == "LOGIN_OK":
+            self._login_waiting_response = False
+
             # notification to BOT
             self.client.send_msg(PROTOCOLS["bot_user_logged_in"], self.username_textfield.text())
 
@@ -287,7 +287,8 @@ class LoginScreen(Observable):
         self.thread_worker.terminate()
         self.main_window.close()
         self.client.detach(self)
-        MainChatScreen.run(ClientTCP=self.client)
+        MS = MainChatScreen.run(ClientTCP=self.client)
+
 
 def run(ClientTCP):
     window = QtWidgets.QMainWindow()

@@ -22,10 +22,7 @@ PROTOCOLS = {
     "online_users": "ONLINE_USERS",
     "chat_rooms_names": "CHAT_ROOMS_NAMES",
     "chat_rooms_info": "CHAT_ROOMS_INFO",
-    "change_user_room": "CHANGE_USER_ROOM",
-    "bot_user_logged_in": "BOT_USER_LOGGED_IN",
-    "bot_user_logged_out": "BOT_USER_LOGGED_OUT",
-    "replace_user_avatar": "REPLACE_USER_AVATAR",
+    "change_user_room": "CHANGE_USER_ROOM"
 
 }  # .. Add more commands if needed
 
@@ -125,7 +122,6 @@ def debugMessages(key):
         "CLIENT_DB_CONNECTED": "Everything is ready!",
         "DB_UPDATE_QUERY_SUCCESS": "Database record updated successfully.",
         "DB_UPDATE_QUERY_FAIL": "Database record could not be updated.",
-        "AVATAR_UPDATED": "User requested to change the avatar, file overwrite successfully."
 
     }
     print(msg_dict[key])
