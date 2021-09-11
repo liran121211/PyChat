@@ -287,7 +287,7 @@ class LoginScreen(Observable):
         self.thread_worker.terminate()
         self.main_window.close()
         self.client.detach(self)
-        MS = MainChatScreen.run(ClientTCP=self.client)
+        MainChatScreen.run(ClientTCP=self.client)
 
 
 def run(ClientTCP):

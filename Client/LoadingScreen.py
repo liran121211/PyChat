@@ -7,7 +7,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 
 import Client
-from timeit import default_timer as timer
 from Misc import fetchAppIcon
 from ThreadWorker import ThreadWorker
 from Protocol import debugMessages
@@ -140,5 +139,11 @@ def run():
     window.show()
     sys.exit(app.exec_())
 
+def restart():
+    window = QtWidgets.QMainWindow()
+    LSF = LoadingScreen()
+    LSF.setupUi(window)
+    window.show()
 
-run()
+if __name__ == "__main__":
+    run()

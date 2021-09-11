@@ -21,7 +21,7 @@ class MessagesModel(QAbstractListModel):
             try:
                 return self.users_avatars[username]
             except KeyError:
-                self.users_avatars[username] = fetchAvatar(username=username, obj_type="QIMAGE").smoothScaled(40,                                                                                                   40)
+                self.users_avatars[username] = fetchAvatar(username=username, obj_type="QIMAGE").smoothScaled(40, 40)
                 return self.users_avatars[username]
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
@@ -30,5 +30,5 @@ class MessagesModel(QAbstractListModel):
     def insertData(self, index: QModelIndex, value: typing.Any) -> None:
         self.beginInsertRows(index, self.rowCount(), self.rowCount())
         if value[0]:
-            self.messages_data.append((value[0], value[1], value[2], value[3]))
+            self.messages_data.append((value[0], value[1], value[2], value[3], value[4]))
         self.endInsertRows()

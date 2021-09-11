@@ -28,7 +28,9 @@ PROTOCOLS = {
     "replace_user_avatar": "REPLACE_USER_AVATAR",
     "replace_username_color": "REPLACE_USERNAME_COLOR",
     "replace_user_status": "REPLACE_USER_STATUS",
-    "refresh_client_info": "REFRESH_CLIENT_INFO"
+    "refresh_client_info": "REFRESH_CLIENT_INFO",
+    "server_offline": "SERVER_OFFLINE",
+    "is_server_running": "IS_SERVER_RUNNING"
 
 }  # .. Add more commands if needed
 

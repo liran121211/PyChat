@@ -62,7 +62,7 @@ def fetchAvatar(username: str, obj_type: typing.Any):
         return svg_data
 
 
-def fetchIcon(name):
+def fetchRoomIcon(name: str, obj_type: typing.Any):
     """
     Fetch unique avatar image for every user from online resource
     :param name: icon (String) name.
@@ -72,7 +72,12 @@ def fetchIcon(name):
     svg_data = requests.get(image_url).content
     pixmap_obj = QPixmap()
     pixmap_obj.loadFromData(svg_data)
-    return pixmap_obj.toImage()
+
+    if obj_type == "QIMAGE":
+        return pixmap_obj.toImage()
+
+    if obj_type == "QPIXMAP":
+        return pixmap_obj
 
 
 def fetchAppIcon() -> QIcon:

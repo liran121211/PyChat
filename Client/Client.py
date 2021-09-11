@@ -15,6 +15,7 @@ class ClientTCP(Observable):
         self.client_socket = None
         self.client_db_info = {}
         self.db_waiting_response = True
+        self.isTerminated = False
 
     def setup(self):
         """
@@ -41,7 +42,6 @@ class ClientTCP(Observable):
 
         except ConnectionError:
             self.notify("TIMEOUT")
-            exit(0)
 
     def recv_msg(self):
         """
@@ -49,9 +49,15 @@ class ClientTCP(Observable):
         Runs infinitely thorough seperated Thread.
         :return: None
         """
-        while True:
-            msg = self.client_socket.recv(self.max_msg_length).decode()
-            self.serverTransmission(self.client_socket, parse_message(msg))
+        while not self.isTerminated:
+            try:
+                msg = self.client_socket.recv(self.max_msg_length).decode()
+                self.serverTransmission(self.client_socket, parse_message(msg))
+            except ConnectionAbortedError:
+                self.isTerminated = True
+                self.notify(PROTOCOLS["server_offline"], "")
+            except ConnectionResetError:
+                self.notify(PROTOCOLS["server_offline"], "")
 
     def send_msg(self, cmd, msg):
         """
@@ -60,7 +66,8 @@ class ClientTCP(Observable):
         :param msg: String that contains the message.
         :return: None
         """
-        self.client_socket.send(build_message(cmd, msg).encode())
+        if not self.isTerminated:
+            self.client_socket.send(build_message(cmd, msg).encode())
 
     def serverTransmission(self, client_socket, message):
         """
@@ -125,6 +132,10 @@ class ClientTCP(Observable):
 
         if cmd == "REPLACE_USER_STATUS":
             self.notify("REPLACE_USER_STATUS", msg)
+
+        if cmd == "IS_SERVER_RUNNING":
+            pass
+
 
 if __name__ == "__main__":
     client = ClientTCP()

@@ -9,12 +9,12 @@
 import time
 
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt, QRect, QRegExp, QSize
+from PyQt5.QtCore import Qt, QRect, QRegExp, QSize, QTimer
 from PyQt5.QtGui import QIcon, QPixmap, QColor
 from PyQt5.QtSvg import QSvgWidget
 from PyQt5.QtWidgets import QFrame, QMessageBox, QPushButton, QLabel, QLineEdit, QCommandLinkButton, QComboBox
 
-import LoginScreen
+import LoadingScreen
 from Models.OnlineUsersFilterModel import OnlineUsersFilterModel
 from Delegates.MessageDelegate import MessageDelegate
 from Delegates.OnlineUsersDelegate import OnlineUsersDelegate
@@ -22,7 +22,7 @@ from Delegates.ChatRoomsDelegate import ChatRoomsDelegate
 from Models.MessagesModel import MessagesModel
 from Models.OnlineUsersModel import OnlineUsersModel
 from Models.ChatRoomsModel import ChatRoomsModel, ChatRoomItem
-from Misc import createFont, timeStamp, fetchAvatar, fetchIcon, fetchAppIcon, toRGB, randomColor, toHex
+from Misc import createFont, timeStamp, fetchAvatar, fetchAppIcon, toRGB, randomColor, toHex, fetchRoomIcon
 from ThreadWorker import ThreadWorker
 from Protocol import *
 from Observable import Observable
@@ -38,7 +38,9 @@ class MainChatScreen(Observable):
         self.client.attach(self)
         self.thread_worker = ThreadWorker()
         self.threads = {}
-        self.finished_loading = False
+        self.window_loaded = False
+        self.users_list_loaded = False
+        self.rooms_list_loaded = False
         self.require_restart = False
 
     def setupUi(self, MainChatWindow):
@@ -51,7 +53,7 @@ class MainChatScreen(Observable):
         self.centralwidget.setObjectName("centralwidget")
 
         self.settings_frame = QFrame(self.centralwidget)
-        self.settings_frame.setObjectName(u"settings_frame")
+        self.settings_frame.setObjectName("settings_frame")
         self.settings_frame.setGeometry(QtCore.QRect(10, 700, 311, 41))
         self.settings_frame.setFrameShape(QFrame.Box)
         self.settings_frame.setFrameShadow(QFrame.Raised)
@@ -63,6 +65,7 @@ class MainChatScreen(Observable):
         self.main_chat.setItemDelegate(MessageDelegate())
         self.main_chat_model = MessagesModel()
         self.main_chat.setModel(self.main_chat_model)
+        self.main_chat.verticalScrollBar().setStyleSheet(SCROLL_BAR_CSS)
 
         self.users_list = QtWidgets.QListView(self.centralwidget)
         self.users_list.setGeometry(QtCore.QRect(1340, 95, 221, 647))
@@ -76,7 +79,7 @@ class MainChatScreen(Observable):
         self.users_list.verticalScrollBar().setStyleSheet(SCROLL_BAR_CSS)
 
         self.users_list_label = QtWidgets.QLabel(self.centralwidget)
-        self.users_list_label.setObjectName(u"users_list_label")
+        self.users_list_label.setObjectName("users_list_label")
         self.users_list_label.setText("-----------Online Users-----------")
         self.users_list_label.setAlignment(Qt.AlignCenter)
         self.users_list_label.setFont(createFont("Eras Medium ITC", 15, False, 50))
@@ -93,7 +96,7 @@ class MainChatScreen(Observable):
         self.chat_rooms_list.verticalScrollBar().setStyleSheet(SCROLL_BAR_CSS)
 
         self.chat_rooms_list_label = QtWidgets.QLabel(self.centralwidget)
-        self.chat_rooms_list_label.setObjectName(u"chat_rooms_list_label")
+        self.chat_rooms_list_label.setObjectName("chat_rooms_list_label")
         self.chat_rooms_list_label.setText("--------------------Chat Rooms--------------------")
         self.chat_rooms_list_label.setAlignment(Qt.AlignCenter)
         self.chat_rooms_list_label.setFont(createFont("Eras Medium ITC", 15, False, 50))
@@ -117,13 +120,13 @@ class MainChatScreen(Observable):
         self.username_label.setFont(createFont("Eras Medium ITC", 14, False, 50))
 
         self.settings_button = QtWidgets.QPushButton(self.settings_frame)
-        self.settings_button.setObjectName(u"settings_button")
+        self.settings_button.setObjectName("settings_button")
         self.settings_button.setGeometry(QtCore.QRect(265, 6, 41, 31))
         self.settings_button.clicked.connect(self.settingsPanel)
         self.settings_button.setStyleSheet("image: url(:/settings_button/settings2.png);")
 
         self.sound_button = QtWidgets.QPushButton(self.settings_frame)
-        self.sound_button.setObjectName(u"settings_button")
+        self.sound_button.setObjectName("settings_button")
         self.sound_button.setGeometry(QtCore.QRect(220, 6, 41, 31))
         self.sound_button.setStyleSheet("image: url(:/main_volume/volume.png);")
         self.sound_button.clicked.connect(self.soundButtonStatus)
@@ -139,63 +142,80 @@ class MainChatScreen(Observable):
         self.send_button.setObjectName("send_button")
 
         self.textfield_label_right = QtWidgets.QLabel(self.centralwidget)
-        self.textfield_label_right.setObjectName(u"textfield_label_right")
+        self.textfield_label_right.setObjectName("textfield_label_right")
         self.textfield_label_right.setGeometry(QtCore.QRect(1270, 700, 61, 41))
         self.textfield_label_right.setStyleSheet(COMMON_STYLESHEET)
         self.textfield_label_right.setFrameShape(QFrame.NoFrame)
 
         self.textfield_label_left = QtWidgets.QLabel(self.centralwidget)
-        self.textfield_label_left.setObjectName(u"textfield_label_left")
+        self.textfield_label_left.setObjectName("textfield_label_left")
         self.textfield_label_left.setFrameShape(QFrame.NoFrame)
         self.textfield_label_left.setGeometry(QtCore.QRect(330, 700, 61, 41))
         self.textfield_label_left.setStyleSheet(COMMON_STYLESHEET)
 
         self.toolbar_frame = QFrame(self.centralwidget)
-        self.toolbar_frame.setObjectName(u"toolbar_frame")
+        self.toolbar_frame.setObjectName("toolbar_frame")
         self.toolbar_frame.setGeometry(QtCore.QRect(330, 0, 1231, 51))
         self.toolbar_frame.setFrameShape(QFrame.Box)
         self.toolbar_frame.setFrameShadow(QFrame.Raised)
         self.toolbar_frame.setStyleSheet(COMMON_STYLESHEET)
 
         self.search_button = QPushButton(self.toolbar_frame)
-        self.search_button.setObjectName(u"search_button")
+        self.search_button.setObjectName("search_button")
         self.search_button.setGeometry(QRect(1185, 12, 41, 23))
-        self.search_button.setStyleSheet(u"image: url(:/search/search_icon.png);\n" + COMMON_STYLESHEET)
+        self.search_button.setStyleSheet("image: url(:/search/search_icon.png);\n" + COMMON_STYLESHEET)
         self.search_button.clicked.connect(self.searchOnlineUser)
 
         self.search_line = QLabel(self.toolbar_frame)
-        self.search_line.setObjectName(u"search_line")
+        self.search_line.setObjectName("search_line")
         self.search_line.setGeometry(QRect(1052, 22, 141, 16))
         self.search_line.setText("__________________________")
 
         self.search_textbox = QLineEdit(self.toolbar_frame)
-        self.search_textbox.setObjectName(u"search_textbox")
+        self.search_textbox.setObjectName("search_textbox")
         self.search_textbox.setGeometry(QRect(1052, 12, 143, 20))
-        self.search_textbox.setText("Search for a specific user...")
+        self.search_textbox.setText("Look up for user...")
         self.search_textbox.mousePressEvent = lambda event: self.search_textbox.setText("")
 
         self.settings_panel = QFrame(self.centralwidget)
         self.settings_panel.setGeometry(
             QRect((self.main_window.width() / 2) - 200, (self.main_window.height() / 2) - 200, 400, 400))
-        self.settings_panel.setObjectName(u"settings_panel")
+        self.settings_panel.setObjectName("settings_panel")
         self.settings_panel.setFrameShape(QFrame.Box)
         self.settings_panel.setFrameShadow(QFrame.Raised)
         self.settings_panel.hide()
 
         self.settings_panel_avatar = QLabel(self.settings_panel)
-        self.settings_panel_avatar.setObjectName(u"settings_panel_avatar")
+        self.settings_panel_avatar.setObjectName("settings_panel_avatar")
 
         self.settings_panel_username = QLabel(self.settings_panel)
-        self.settings_panel_username.setObjectName(u"settings_panel_username")
+        self.settings_panel_username.setObjectName("settings_panel_username")
 
         self.replace_avatar = QCommandLinkButton(self.settings_panel)
-        self.replace_avatar.setObjectName(u"replace_avatar_")
+        self.replace_avatar.setObjectName("replace_avatar_")
 
         self.replace_username_color = QCommandLinkButton(self.settings_panel)
-        self.replace_username_color.setObjectName(u"replace_username_color")
+        self.replace_username_color.setObjectName("replace_username_color")
+
+        self.server_offline_label = QLabel(self.centralwidget)
+        self.server_offline_label.setObjectName("server_offline_label")
+        self.server_offline_label.setText("Server is offline now!")
+        self.server_offline_label.setGeometry(QRect(540, 280, 581, 91))
+        self.server_offline_label.setTextFormat(Qt.PlainText)
+        self.server_offline_label.setFont(createFont("Eras Medium ITC", 42, False, 50))
+        self.server_offline_label.setStyleSheet("color: rgb(255,0,0)")
+        self.server_offline_label.setAlignment(Qt.AlignCenter)
+        self.server_offline_label.hide()
+
+        self.current_user_chat_room = QLabel(self.toolbar_frame)
+        self.current_user_chat_room.setGeometry(QRect(10, 10, 250, 30))
+        self.current_user_chat_room.setObjectName("current_user_chat_room")
+        self.current_user_chat_room.setFont(createFont("Eras Medium ITC", 16, False, 40))
+        self.current_user_chat_room.setText('# '+self.client.client_db_info["room"])
+
 
         self.replace_user_status = QComboBox(self.settings_panel)
-        self.replace_user_status.setObjectName(u"replace_user_status")
+        self.replace_user_status.setObjectName("replace_user_status")
         self.replace_user_status.addItem("")
         self.replace_user_status.addItem("")
         self.replace_user_status.addItem("")
@@ -209,6 +229,8 @@ class MainChatScreen(Observable):
         self.user_avatar.raise_()
         self.username_label.raise_()
         self.settings_button.raise_()
+        self.server_offline_label.raise_()
+        self.current_user_chat_room.raise_()
 
         MainChatWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainChatWindow)
@@ -231,15 +253,12 @@ class MainChatScreen(Observable):
         # Settings panel
         self.username_label.setText(self.client.client_db_info["username"])
         self.user_avatar.renderer().load(fetchAvatar(username=self.client.client_db_info["username"], obj_type="SVG"))
-        self.block_replaceUserAvatar = False
         self.initSettingsPanel()
-
-        # Fetch User List and Chat Rooms List
-        self.client.send_msg(PROTOCOLS["chat_rooms_names"], "")
-        self.client.send_msg(PROTOCOLS["online_users"], "")
+        self.initLists()
+        self.serverStatus()
 
         # Misc...
-        self.finished_loading = True
+        self.window_loaded = True
         self.main_window.show()
 
     def retranslateUi(self, MainChatWindow):
@@ -254,15 +273,15 @@ class MainChatScreen(Observable):
         :return: None
         """
         if notif == "ONLINE_USERS":
-            while self.finished_loading is False:
-                pass
+            self.users_list_loaded = True
             self.updateUserList(data)
 
         if notif == "MESSAGE_TO_CLIENT":
-            if self.finished_loading is True:
+            if self.window_loaded is True:
                 self.updateChat(data)
 
         if notif == "CHAT_ROOMS_NAMES":
+            self.rooms_list_loaded = True
             self.initRoomsList(data)
 
         if notif == "CHAT_ROOMS_INFO":
@@ -292,18 +311,25 @@ class MainChatScreen(Observable):
                 self.replace_user_status.setEnabled(True)
                 self.require_restart = True
 
+        if notif == "SERVER_OFFLINE":
+            self.main_window.setDisabled(True)
+            self.main_chat.setDisabled(True)
+            self.server_offline_label.show()
+
     def updateChat(self, data):
-        username, message = data.split('#')
+        username, text_direction, message = data.split('#')
         model_index = self.main_chat_model.index(self.main_chat_model.rowCount(), 0)
-        self.main_chat_model.insertData(model_index, (username, [180, 20, 50], timeStamp(), message))
+        self.main_chat_model.insertData(model_index, (username, [180, 20, 50], timeStamp(), text_direction, message))
 
     def sendMessage(self):
-        if self.message_textfield.text() != "":
-            dispatch_data = self.client.client_db_info["username"] + '#' + self.message_textfield.text().replace('#',
-                                                                                                                 '')
-            self.sendButtonStatus(False)
+        if self.message_textfield.text() != "" and self.message_textfield.text() != '#':
+            username = self.client.client_db_info["username"]
+            text_direction = str(self.message_textfield.isLeftToRight())
+            text_message = self.message_textfield.text().replace('#', '')
+            dispatch_data = username + '#' + text_direction + '#' + text_message
             self.client.send_msg(PROTOCOLS["client_message"], dispatch_data)
             self.message_textfield.setText("")
+            self.sendButtonStatus(False)
 
     def messageFieldStatus(self):
         if self.message_textfield.text() == "":
@@ -314,6 +340,15 @@ class MainChatScreen(Observable):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return and self.message_textfield.hasFocus() is True:
             self.sendMessage()
+
+        if event.key() == Qt.Key_Enter and self.message_textfield.hasFocus() is True:
+            self.sendMessage()
+
+        if event.key() == Qt.Key_Return and self.search_textbox.hasFocus() is True:
+            self.search_button.click()
+
+        if event.key() == Qt.Key_Enter and self.search_textbox.hasFocus() is True:
+            self.search_button.click()
 
     def updateUserList(self, online_users):
         """
@@ -359,7 +394,7 @@ class MainChatScreen(Observable):
         # for each room name create (ChatRoomItem) node, fetch room icon.
         for row in decoded_data:
             rooms_nodes.append(ChatRoomItem(row[0]))
-            rooms_icons[row[0]] = fetchIcon(row[1])
+            rooms_icons[row[0]] = fetchRoomIcon(row[1],"QIMAGE")
 
         # init model and send the data.
         self.chat_rooms_list_model = ChatRoomsModel(rooms_nodes)
@@ -393,6 +428,7 @@ class MainChatScreen(Observable):
         clicked_item = index.data(0)[0]
         username = self.client.client_db_info["username"]
         if self.chat_rooms_list_model.findRoom(clicked_item) is not None:
+            self.current_user_chat_room.setText('# ' + clicked_item)
             self.client.send_msg(PROTOCOLS["change_user_room"], clicked_item + '#' + username)
 
     def sendButtonStatus(self, mode):
@@ -409,15 +445,7 @@ class MainChatScreen(Observable):
             self.sound_button.setStyleSheet("image: url(:/main_volume/volume.png);")
 
     def closeEvent(self, event):
-        msgBox = QMessageBox()
-        msgBox.setText("You will no longer be a part of the chat, Are you sure? ")
-        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        msgBox.setDefaultButton(QMessageBox.Yes)
-        if msgBox.exec_() == QMessageBox.Yes:
-            self.client.send_msg(PROTOCOLS["bot_user_logged_out"], self.client.client_db_info["username"])
-            event.accept()
-        else:
-            event.ignore()
+        event.accept()
 
     def searchOnlineUser(self):
         syntax = QRegExp.PatternSyntax(QRegExp.RegExp)
@@ -441,8 +469,10 @@ class MainChatScreen(Observable):
                     Qt.WindowTitleHint | Qt.Dialog | Qt.WindowMaximizeButtonHint | Qt.CustomizeWindowHint)
                 msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
                 if msgBox.exec_() == QMessageBox.Ok:
+                    self.client.isTerminated = True
+                    self.client.client_socket.close()
                     self.main_window.close()
-                    LoginScreen.run(self.client)
+                    LoadingScreen.restart()
             else:
                 self.settings_panel.hide()
 
@@ -451,6 +481,7 @@ class MainChatScreen(Observable):
         username, password = self.client.client_db_info["username"], self.client.client_db_info["password"]
         self.client.send_msg(PROTOCOLS["refresh_client_info"], username + "#" + password)
 
+        self.block_replaceUserAvatar = False
         x_loc = self.settings_panel.width() / 2
         username = self.client.client_db_info["username"]
         self.settings_panel_avatar.setGeometry(x_loc - 75, 50, 150, 150)
@@ -463,7 +494,7 @@ class MainChatScreen(Observable):
         self.settings_panel_username.setStyleSheet("color: #" + self.client.client_db_info["color"] + ";")
 
         avatar_icon = QIcon()
-        avatar_icon.addFile(u":/replace_avatar/replace_avatar.png", QSize(), QIcon.Normal, QIcon.Off)
+        avatar_icon.addFile(":/replace_avatar/replace_avatar.png", QSize(), QIcon.Normal, QIcon.Off)
         self.replace_avatar.setGeometry(QRect(15, 270, 250, 51))
         self.replace_avatar.setIcon(avatar_icon)
         self.replace_avatar.setIconSize(QSize(32, 32))
@@ -474,7 +505,7 @@ class MainChatScreen(Observable):
         QPushButton:disabled {background:rgb(128, 128, 255, 10); border: 0px;}""")
 
         username_icon = QIcon()
-        username_icon.addFile(u":/change_username_color/change_username_color.png", QSize(), QIcon.Normal, QIcon.Off)
+        username_icon.addFile(":/change_username_color/change_username_color.png", QSize(), QIcon.Normal, QIcon.Off)
         self.replace_username_color.setGeometry(QRect(15, 310, 250, 51))
         self.replace_username_color.setIcon(username_icon)
         self.replace_username_color.setIconSize(QSize(32, 32))
@@ -524,6 +555,17 @@ class MainChatScreen(Observable):
         status = str(self.replace_user_status.currentData(Qt.DisplayRole)).upper()
         username = self.client.client_db_info["username"]
         self.client.send_msg(PROTOCOLS["replace_user_status"], status + '#' + username)
+
+    def serverStatus(self):
+        self.client.send_msg(PROTOCOLS["is_server_running"], "")
+        QTimer.singleShot(5000, lambda: self.serverStatus())
+
+    def initLists(self):
+        self.client.send_msg(PROTOCOLS["chat_rooms_names"], "")
+        self.client.send_msg(PROTOCOLS["online_users"], "")
+
+        if self.users_list_loaded is False or self.rooms_list_loaded is False:
+            QTimer.singleShot(500, lambda: self.initLists())
 
 
 def run(ClientTCP):
