@@ -10,10 +10,11 @@ import time
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QRect, QRegExp, QSize
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QPixmap, QColor
 from PyQt5.QtSvg import QSvgWidget
-from PyQt5.QtWidgets import QFrame, QMessageBox, QPushButton, QLabel, QLineEdit, QCommandLinkButton
+from PyQt5.QtWidgets import QFrame, QMessageBox, QPushButton, QLabel, QLineEdit, QCommandLinkButton, QComboBox
 
+import LoginScreen
 from Models.OnlineUsersFilterModel import OnlineUsersFilterModel
 from Delegates.MessageDelegate import MessageDelegate
 from Delegates.OnlineUsersDelegate import OnlineUsersDelegate
@@ -21,7 +22,7 @@ from Delegates.ChatRoomsDelegate import ChatRoomsDelegate
 from Models.MessagesModel import MessagesModel
 from Models.OnlineUsersModel import OnlineUsersModel
 from Models.ChatRoomsModel import ChatRoomsModel, ChatRoomItem
-from Misc import createFont, timeStamp, fetchAvatar, fetchIcon, fetchAppIcon, toRGB, randomColor
+from Misc import createFont, timeStamp, fetchAvatar, fetchIcon, fetchAppIcon, toRGB, randomColor, toHex
 from ThreadWorker import ThreadWorker
 from Protocol import *
 from Observable import Observable
@@ -38,6 +39,7 @@ class MainChatScreen(Observable):
         self.thread_worker = ThreadWorker()
         self.threads = {}
         self.finished_loading = False
+        self.require_restart = False
 
     def setupUi(self, MainChatWindow):
         self.main_window = MainChatWindow
@@ -192,6 +194,12 @@ class MainChatScreen(Observable):
         self.replace_username_color = QCommandLinkButton(self.settings_panel)
         self.replace_username_color.setObjectName(u"replace_username_color")
 
+        self.replace_user_status = QComboBox(self.settings_panel)
+        self.replace_user_status.setObjectName(u"replace_user_status")
+        self.replace_user_status.addItem("")
+        self.replace_user_status.addItem("")
+        self.replace_user_status.addItem("")
+
         self.search_textbox.raise_()
         self.search_button.raise_()
         self.message_textfield.raise_()
@@ -214,10 +222,6 @@ class MainChatScreen(Observable):
         self.retranslateUi(MainChatWindow)
         QtCore.QMetaObject.connectSlotsByName(MainChatWindow)
 
-        # Fetch User List and Chat Rooms List
-        self.client.send_msg(PROTOCOLS["chat_rooms_names"], "")
-        self.client.send_msg(PROTOCOLS["online_users"], "")
-
         # Connect Events and Buttons
         MainChatWindow.keyPressEvent = self.keyPressEvent
         self.main_window.closeEvent = self.closeEvent
@@ -227,11 +231,16 @@ class MainChatScreen(Observable):
         # Settings panel
         self.username_label.setText(self.client.client_db_info["username"])
         self.user_avatar.renderer().load(fetchAvatar(username=self.client.client_db_info["username"], obj_type="SVG"))
-        self.initSettingsPanel()
         self.block_replaceUserAvatar = False
+        self.initSettingsPanel()
+
+        # Fetch User List and Chat Rooms List
+        self.client.send_msg(PROTOCOLS["chat_rooms_names"], "")
+        self.client.send_msg(PROTOCOLS["online_users"], "")
 
         # Misc...
         self.finished_loading = True
+        self.main_window.show()
 
     def retranslateUi(self, MainChatWindow):
         translate = QtCore.QCoreApplication.translate
@@ -271,6 +280,17 @@ class MainChatScreen(Observable):
                 self.replace_avatar.setEnabled(True)
                 username = self.client.client_db_info["username"]
                 self.settings_panel_avatar.setPixmap(fetchAvatar(username, "PIXMAP").scaled(150, 150))
+                self.require_restart = True
+
+        if notif == "REPLACE_USERNAME_COLOR":
+            if data == "SUCCESS":
+                self.replace_username_color.setEnabled(True)
+                self.require_restart = True
+
+        if notif == "REPLACE_USER_STATUS":
+            if data == "SUCCESS":
+                self.replace_user_status.setEnabled(True)
+                self.require_restart = True
 
     def updateChat(self, data):
         username, message = data.split('#')
@@ -412,9 +432,25 @@ class MainChatScreen(Observable):
             self.initSettingsPanel()
             self.settings_panel.show()
         else:
-            self.settings_panel.hide()
+            if self.require_restart:
+                msgBox = QMessageBox()
+                msgBox.setIcon(QMessageBox.Warning)
+                msgBox.setText("Restart to apply changes.")
+                msgBox.setWindowTitle("Warning")
+                msgBox.setWindowFlags(
+                    Qt.WindowTitleHint | Qt.Dialog | Qt.WindowMaximizeButtonHint | Qt.CustomizeWindowHint)
+                msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+                if msgBox.exec_() == QMessageBox.Ok:
+                    self.main_window.close()
+                    LoginScreen.run(self.client)
+            else:
+                self.settings_panel.hide()
 
     def initSettingsPanel(self):
+        # refresh client data from database.
+        username, password = self.client.client_db_info["username"], self.client.client_db_info["password"]
+        self.client.send_msg(PROTOCOLS["refresh_client_info"], username + "#" + password)
+
         x_loc = self.settings_panel.width() / 2
         username = self.client.client_db_info["username"]
         self.settings_panel_avatar.setGeometry(x_loc - 75, 50, 150, 150)
@@ -428,7 +464,7 @@ class MainChatScreen(Observable):
 
         avatar_icon = QIcon()
         avatar_icon.addFile(u":/replace_avatar/replace_avatar.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.replace_avatar.setGeometry(QRect(15, 240, 250, 51))
+        self.replace_avatar.setGeometry(QRect(15, 270, 250, 51))
         self.replace_avatar.setIcon(avatar_icon)
         self.replace_avatar.setIconSize(QSize(32, 32))
         self.replace_avatar.setText("Replace Current Avatar")
@@ -439,18 +475,43 @@ class MainChatScreen(Observable):
 
         username_icon = QIcon()
         username_icon.addFile(u":/change_username_color/change_username_color.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.replace_username_color.setGeometry(QRect(15, 280, 250, 51))
+        self.replace_username_color.setGeometry(QRect(15, 310, 250, 51))
         self.replace_username_color.setIcon(username_icon)
         self.replace_username_color.setIconSize(QSize(32, 32))
         self.replace_username_color.setText("Replace Username Color")
         self.replace_username_color.setFont(createFont("Eras Medium ITC", 13, True, 50))
-        self.replace_username_color.setStyleSheet(""":hover{background:rgb(128, 128, 255, 10); border: 0px;}""")
         self.replace_username_color.clicked.connect(self.replaceUserColor)
+        self.replace_username_color.setStyleSheet(""":hover{background:rgb(128, 128, 255, 10); border: 0px;}
+        QPushButton:disabled {background:rgb(128, 128, 255, 10); border: 0px;}""")
+
+        self.replace_user_status.setGeometry(x_loc - 75, 240, 158, 30)
+        self.replace_user_status.setFont(createFont("Eras Medium ITC", 13, True, 50))
+        self.replace_user_status.setStyleSheet(COMBO_BOX_CSS)
+        status_dict = {"Available": (59, 165, 93, 0), "Away": (250, 168, 26, 1), "Unavailable": (237, 66, 69, 2)}
+
+        for status, color in status_dict.items():
+            R, G, B = color[0], color[1], color[2]
+            index = color[3]
+            icon = QPixmap(20, 20)
+            icon.fill(QColor(R, G, B))
+            self.replace_user_status.setItemIcon(index, QIcon(icon))
+            self.replace_user_status.setItemData(index, status, Qt.DisplayRole)
+
+        if self.client.client_db_info["status"] == "AVAILABLE":
+            self.replace_user_status.setCurrentIndex(0)
+        elif self.client.client_db_info["status"] == "AWAY":
+            self.replace_user_status.setCurrentIndex(1)
+        elif self.client.client_db_info["status"] == "UNAVAILABLE":
+            self.replace_user_status.setCurrentIndex(2)
+        self.replace_user_status.currentIndexChanged.connect(self.replaceUserStatus)
 
     def replaceUserColor(self):
         R, G, B = randomColor()
-        CSS = """color:rgb(""" + R + """, """ + G + """, """ + B + """)"""
+        CSS = "color:rgb({0},{1},{2})".format(R, G, B)
+        msg = toHex(R, G, B).upper() + '#' + self.client.client_db_info["username"]
         self.settings_panel_username.setStyleSheet(CSS)
+        self.replace_username_color.setDisabled(True)
+        self.client.send_msg(PROTOCOLS["replace_username_color"], msg)
 
     def replaceUserAvatar(self):
         if self.block_replaceUserAvatar is False:
@@ -458,9 +519,14 @@ class MainChatScreen(Observable):
             self.replace_avatar.setDisabled(True)
             self.block_replaceUserAvatar = True
 
+    def replaceUserStatus(self):
+        self.replace_user_status.setEnabled(False)
+        status = str(self.replace_user_status.currentData(Qt.DisplayRole)).upper()
+        username = self.client.client_db_info["username"]
+        self.client.send_msg(PROTOCOLS["replace_user_status"], status + '#' + username)
+
 
 def run(ClientTCP):
     window = QtWidgets.QMainWindow()
     MCS = MainChatScreen(ClientTCP=ClientTCP)
     MCS.setupUi(window)
-    window.show()

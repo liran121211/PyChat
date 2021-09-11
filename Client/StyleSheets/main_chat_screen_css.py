@@ -8,7 +8,6 @@
 
 from PyQt5 import QtCore
 
-
 COMMON_STYLESHEET = "background-color: rgb(243, 243, 243);\nborder-radius: 10px;"
 
 SCROLL_BAR_CSS = """QScrollBar:vertical {              
@@ -37,6 +36,27 @@ SCROLL_BAR_CSS = """QScrollBar:vertical {
             subcontrol-origin: margin;
         }"""
 
+COMBO_BOX_CSS = """QComboBox {
+border: 1px solid #333333;
+border-radius: 3px;
+background: #ffffff;
+padding: 1px 23px 1px 3px;
+min-width: 6em;
+color: #000000;
+}
+QComboBox::drop-down {
+subcontrol-origin: padding;
+subcontrol-position: top right;
+width: 20px;
+border-top-right-radius: 3px;
+border-bottom-right-radius: 3px;
+}
+QComboBox QAbstractItemView{
+background-color: #ffffff;
+color: #000000;
+selection-background-color: rgb(128,128,255,10);
+selection-color: #000000;
+}"""
 
 qt_resource_data = b"\
 \x00\x02\x16\x10\
@@ -10651,10 +10671,13 @@ else:
     rcc_version = 2
     qt_resource_struct = qt_resource_struct_v2
 
+
 def qInitResources():
     QtCore.qRegisterResourceData(rcc_version, qt_resource_struct, qt_resource_name, qt_resource_data)
 
+
 def qCleanupResources():
     QtCore.qUnregisterResourceData(rcc_version, qt_resource_struct, qt_resource_name, qt_resource_data)
+
 
 qInitResources()

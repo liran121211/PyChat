@@ -92,6 +92,10 @@ def toRGB(hex_color: str) -> tuple:
     return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
 
 
+def toHex(r: str, g: str, b: str) -> str:
+    return '%02x%02x%02x' % (int(r), int(g), int(b))
+
+
 def catchErrors(exctype, value, traceback):
     # Print the error and traceback
     print(exctype, value, traceback)

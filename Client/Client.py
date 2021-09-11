@@ -120,6 +120,12 @@ class ClientTCP(Observable):
         if cmd == "REPLACE_USER_AVATAR":
             self.notify("REPLACE_USER_AVATAR", msg)
 
+        if cmd == "REPLACE_USERNAME_COLOR":
+            self.notify("REPLACE_USERNAME_COLOR", msg)
+
+        if cmd == "REPLACE_USER_STATUS":
+            self.notify("REPLACE_USER_STATUS", msg)
+
 if __name__ == "__main__":
     client = ClientTCP()
     client.setup()

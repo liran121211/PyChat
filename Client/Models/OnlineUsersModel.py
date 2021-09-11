@@ -31,6 +31,7 @@ class OnlineUsersModel(QAbstractListModel):
         for row in range(0, len(self.users_data)):
             if self.users_data[row][0] == value:
                 self.beginRemoveRows(QModelIndex(), row, row)
+                self.users_avatars.pop(self.users_data[row][0])
                 self.users_data.pop(row)
                 self.endRemoveRows()
                 break
