@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QMargins, QRectF, Qt, QSize
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QBrush
 from PyQt5.QtWidgets import QStyledItemDelegate, QApplication
 
 # noinspection PyUnresolvedReferences
@@ -65,6 +65,9 @@ class MessageDelegate(QStyledItemDelegate):
             # paint avatar image proprieties
             avatar_rect = QRectF(option.rect.x() +950, option.rect.y() + 10, 40, 40)
             painter.drawImage(avatar_rect, avatar_image)
+
+        if username == "PyBOT":
+            painter.fillRect(option.rect, QBrush(QColor(0, 56, 255, 10)))
 
     def sizeHint(self, option, index) -> QSize:
         _, _, _, _, text_message = index.model().data(index, Qt.DisplayRole)

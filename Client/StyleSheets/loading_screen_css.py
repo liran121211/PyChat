@@ -8,6 +8,8 @@
 
 from PyQt5 import QtCore
 
+LOADING_CSS = """#loading_bar::chunk {background-color: #2196F3;width: 10px; margin: 0.5px;}"""
+
 qt_resource_data = b"\
 \x00\x01\xa7\x2c\
 \x89\

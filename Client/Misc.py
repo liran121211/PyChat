@@ -1,19 +1,24 @@
+import os
 import random
 import sys
 import typing
-from datetime import datetime
 import requests
-from PyQt5.QtGui import QFont, QPixmap, QIcon
+
+from datetime import datetime
+from urllib.request import urlretrieve
+from PyQt5.QtGui import QFont, QPixmap, QIcon, QImage
+
+SERVER_URL = 'http://167.172.181.78'
 
 
 def randomColor():
-    R = random.randint(0, 244)
-    G = random.randint(0, 244)
-    B = random.randint(0, 244)
+    R = random.randint(1, 244)
+    G = random.randint(1, 244)
+    B = random.randint(1, 244)
     return str(R), str(G), str(B)
 
 
-def createFont(fontFamily=None, PointSize=None, Bold=None, Weight=None):
+def createFont(fontFamily=None, PointSize=None, Bold=None, Weight=None) -> QFont:
     """
     Create new Font object.
     :param fontFamily: name of the font.
@@ -30,18 +35,18 @@ def createFont(fontFamily=None, PointSize=None, Bold=None, Weight=None):
     return font
 
 
-def timeStamp():
+def timeStamp() -> typing.AnyStr:
     return "Today at " + datetime.now().strftime("%I:%M %p")
 
 
-def fetchAvatar(username: str, obj_type: typing.Any):
+def fetchAvatar(username: str, obj_type: typing.Any) -> QIcon or typing.ByteString or QImage or QPixmap:
     """
     Fetch unique avatar image for every user from online resource
     :param username: username (String)
     :param obj_type: type of obj to be returned.
-    :return: QIcon obj, svg (ByteArray)
+    :return: QIcon, svg (ByteArray), QImage, QPixmap
     """
-    image_url = 'http://167.172.181.78/avatars/{0}.svg'.format(username)
+    image_url = '{0}/avatars/{1}.svg'.format(SERVER_URL, username)
     pixmap_obj = QPixmap()
     svg_data = requests.get(image_url).content
     pixmap_obj.loadFromData(svg_data)
@@ -62,13 +67,14 @@ def fetchAvatar(username: str, obj_type: typing.Any):
         return svg_data
 
 
-def fetchRoomIcon(name: str, obj_type: typing.Any):
+def fetchRoomIcon(name: str, obj_type: typing.Any) -> QImage or QPixmap:
     """
     Fetch unique avatar image for every user from online resource
+    :param obj_type: object name (QIMAGE, QPIXMAP)
     :param name: icon (String) name.
-    :return: QImage
+    :return: QImage, QPixmap
     """
-    image_url = 'http://167.172.181.78/chat_icons/{0}'.format(name)
+    image_url = '{0}/chat_icons/{1}'.format(SERVER_URL, name)
     svg_data = requests.get(image_url).content
     pixmap_obj = QPixmap()
     pixmap_obj.loadFromData(svg_data)
@@ -80,28 +86,85 @@ def fetchRoomIcon(name: str, obj_type: typing.Any):
         return pixmap_obj
 
 
-def fetchAppIcon() -> QIcon:
+def fetchWindowIcon() -> QIcon:
     """
     Fetch app icon for every window created.
     :return: QIcon
     """
-    image_url = 'http://167.172.181.78/app_icon/pyc-32x32.png'
+    image_url = '{0}/app_icon/pyc-32x32.png'.format(SERVER_URL)
     svg_data = requests.get(image_url).content
     pixmap_obj = QPixmap()
     pixmap_obj.loadFromData(svg_data)
     return QIcon(pixmap_obj)
 
 
+def fetchCredits() -> typing.AnyStr:
+    """
+    Fetch credits info from server.
+    :return: HTML decoded (String)
+    """
+    url_file = '{0}/credits.html'.format(SERVER_URL)
+    return requests.get(url_file).content.decode()
+
+
+def fetchSound() -> None:
+    """
+    Fetch all sounds files locally.
+    :return: None
+    """
+    try:
+        urlretrieve('{0}/sounds/login_sound.mp3'.format(SERVER_URL), 'sounds/login_sound.mp3')
+        urlretrieve('{0}/sounds/logout_sound.mp3'.format(SERVER_URL), 'sounds/logout_sound.mp3')
+        urlretrieve('{0}/sounds/new_message.mp3'.format(SERVER_URL), 'sounds/new_message.mp3')
+    except PermissionError:
+        fetchSound()
+    except FileNotFoundError:
+        os.mkdir('Sounds')
+        fetchSound()
+
+
 def toRGB(hex_color: str) -> tuple:
-    # credits to : https://stackoverflow.com/questions/29643352/converting-hex-to-rgb-value-in-python
+    """
+    Convert hex format string to rgb format string.
+    :param hex_color: string (#FFFFFF)
+    :return: tuple of (R,G,B)
+    """
     return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
 
 
 def toHex(r: str, g: str, b: str) -> str:
+    """
+    Convert rgb format string to hex format string.
+    :param b: (0-255) color code
+    :param g: (0-255) color code
+    :param r: (0-255) color code
+    :return: string of (#FFFFFF)
+    """
     return '%02x%02x%02x' % (int(r), int(g), int(b))
 
 
+def fetchImages():
+    """
+    Fetch all images files locally.
+    :return: None
+    """
+    try:
+        urlretrieve('{0}/misc/loading_data_.gif'.format(SERVER_URL), 'sounds/loading.gif')
+    except PermissionError:
+        fetchImages()
+    except FileNotFoundError:
+        os.mkdir('Images')
+        fetchImages()
+
+
 def catchErrors(exctype, value, traceback):
+    """
+    Catch the errors of PyQt and print them in the terminal.
+    :param exctype: Error type
+    :param value: the error by String.
+    :param traceback: chain of error.
+    :return: string detailed error.
+    """
     # Print the error and traceback
     print(exctype, value, traceback)
     # Call the normal Exception hook after
