@@ -235,8 +235,8 @@ class LoginScreen(Observable):
         QtCore.QMetaObject.connectSlotsByName(LoginWindow)
 
         # Manual components settings
-        self.username_textfield.setText("Extarminator")
-        self.password_textfield.setText("GreatPassword")
+        self.username_textfield.setText("Enter your username...")
+        self.password_textfield.setText("Password")
 
         threading.Thread(target=self.client.recv_msg, daemon=True).start()
         self.thread_worker.finished.connect(self.loadMainChatWindow)
