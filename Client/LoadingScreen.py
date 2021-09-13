@@ -147,7 +147,3 @@ def restart():
     next_window = LoadingScreen()
     next_window.setupUi(window)
     window.show()
-
-
-if __name__ == "__main__":
-    run()
