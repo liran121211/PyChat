@@ -11,7 +11,11 @@ from PyQt5.QtGui import QFont, QPixmap, QIcon, QImage
 SERVER_URL = 'http://167.172.181.78'
 
 
-def randomColor():
+def randomColor() -> tuple:
+    """
+    Generate ramdom RGB color
+    :return: tuple (r,g,b) color.
+    """
     R = random.randint(1, 244)
     G = random.randint(1, 244)
     B = random.randint(1, 244)
@@ -36,6 +40,10 @@ def createFont(fontFamily=None, PointSize=None, Bold=None, Weight=None) -> QFont
 
 
 def timeStamp() -> typing.AnyStr:
+    """
+    Create customized (String) time stamp.
+    :return: time stamp (String)
+    """
     return "Today at " + datetime.now().strftime("%I:%M %p")
 
 
@@ -143,7 +151,7 @@ def toHex(r: str, g: str, b: str) -> str:
     return '%02x%02x%02x' % (int(r), int(g), int(b))
 
 
-def fetchImages():
+def fetchImages() -> None:
     """
     Fetch all images files locally.
     :return: None
@@ -157,7 +165,7 @@ def fetchImages():
         fetchImages()
 
 
-def catchErrors(exctype, value, traceback):
+def catchErrors(exctype, value, traceback) -> None:
     """
     Catch the errors of PyQt and print them in the terminal.
     :param exctype: Error type

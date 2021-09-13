@@ -1,13 +1,16 @@
 import threading
 from pathlib import Path
+
+import typing
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QRect, QRegExp, QSize, QTimer
-from PyQt5.QtGui import QIcon, QPixmap, QColor, QMovie
+from PyQt5.QtGui import QIcon, QPixmap, QColor, QMovie, QKeyEvent
 from PyQt5.QtSvg import QSvgWidget
-from PyQt5.QtWidgets import QFrame, QMessageBox, QPushButton, QLabel, QLineEdit, QCommandLinkButton, QComboBox, \
-    QTextEdit
+from PyQt5.QtWidgets import QFrame, QMessageBox, QPushButton, QLabel
+from PyQt5.QtWidgets import QLineEdit, QCommandLinkButton, QComboBox, QTextEdit
 
 import LoadingScreen
+import Client
 from Models.OnlineUsersFilterModel import OnlineUsersFilterModel
 from Delegates.MessageDelegate import MessageDelegate
 from Delegates.OnlineUsersDelegate import OnlineUsersDelegate
@@ -15,12 +18,12 @@ from Delegates.ChatRoomsDelegate import ChatRoomsDelegate
 from Models.MessagesModel import MessagesModel
 from Models.OnlineUsersModel import OnlineUsersModel
 from Models.ChatRoomsModel import ChatRoomsModel, ChatRoomItem
-from Misc import createFont, timeStamp, fetchAvatar, fetchWindowIcon, toRGB, randomColor, toHex, fetchRoomIcon, \
-    fetchCredits
+from Misc import createFont, timeStamp, fetchAvatar, fetchWindowIcon
+from Misc import toRGB, randomColor, toHex, fetchRoomIcon, fetchCredits
 from ThreadWorker import ThreadWorker
-from Protocol import *
 from Observable import Observable
 from playsound2 import playsound
+from Protocol import *
 
 # noinspection PyUnresolvedReferences
 from StyleSheets.main_chat_screen_css import *
@@ -287,11 +290,11 @@ class MainChatScreen(Observable):
         self.window_loaded = True
         self.main_window.show()
 
-    def update(self, notif, data=None):
+    def update(self, notif: typing.AnyStr, data: typing.AnyStr) -> None:
         """
-        Get notification from client interface
-        :param notif: client command protocol
-        :param data: client data.
+        Get notifications from client TCP module.
+        :param notif: cmd (String) of command.
+        :param data: message with data (String)
         :return: None
         """
         if notif == "ONLINE_USERS":
@@ -360,12 +363,22 @@ class MainChatScreen(Observable):
             self.main_chat.setDisabled(True)
             self.server_offline_label.show()
 
-    def updateChat(self, data):
+    def updateChat(self, data: typing.AnyStr) -> None:
+        """
+        Update chat (QListView) with the current data sent from the server.
+        :param data: decoded (String) data.
+        :return: None
+        """
         username, text_direction, message = data.split('#')
         model_index = self.main_chat_model.index(self.main_chat_model.rowCount(), 0)
         self.main_chat_model.insertData(model_index, (username, [180, 20, 50], timeStamp(), text_direction, message))
 
-    def sendMessage(self):
+    def sendMessage(self) -> None:
+        """
+        Gather data from the (message_textfield) and dispatch it to the server.
+        Avoid server overload when the (message_textfield) is empty.
+        :return: None
+        """
         if self.message_textfield.text() != "" and self.message_textfield.text() != '#':
             username = self.client.client_db_info["username"]
             text_direction = str(self.message_textfield.isLeftToRight())
@@ -374,15 +387,24 @@ class MainChatScreen(Observable):
             dispatch_data = username + '#' + text_direction + '#' + text_message
             self.client.send_msg(PROTOCOLS["client_message"], dispatch_data)
             self.message_textfield.setText("")
-            self.sendButtonStatus(False)
+            self.send_button.setStyleSheet(DISABLED_BTN_CSS)
 
-    def messageFieldStatus(self):
+    def messageFieldStatus(self) -> None:
+        """
+        Change StyleSheet of (message_textfield) when it's  empty/not empty.
+        :return: None
+        """
         if self.message_textfield.text() == "":
-            self.sendButtonStatus(False)
+            self.send_button.setStyleSheet(DISABLED_BTN_CSS)
         else:
-            self.sendButtonStatus(True)
+            self.send_button.setStyleSheet(ENABLED_BTN_CSS)
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """
+        Triggered when key is pressed in GUI window.
+        :param event: (QKeyEvent) object
+        :return: None
+        """
         if event.key() == Qt.Key_Return and self.message_textfield.hasFocus() is True:
             self.sendMessage()
 
@@ -395,10 +417,10 @@ class MainChatScreen(Observable):
         if event.key() == Qt.Key_Enter and self.search_textbox.hasFocus() is True:
             self.search_button.click()
 
-    def updateUserList(self, online_users):
+    def updateUserList(self, online_users: typing.AnyStr) -> None:
         """
         Update QListView widget and show the online users only.
-        :param online_users: list of users that have ('online'=True) in the database
+        :param online_users: encoded filtered list of users with ('online'=True) in the database.
         :return: None
         """
         # decode users to list
@@ -424,10 +446,10 @@ class MainChatScreen(Observable):
             elif online == 'False':
                 self.users_list_model.removeData(username)
 
-    def initRoomsList(self, data):
+    def initRoomsList(self, data: typing.AnyStr) -> None:
         """
-        Load chat rooms list with their icons.
-        :param data: pair room name and icon list.
+        Load chat rooms list, for each room (item) load the icon.
+        :param data: [room name, icon] list.
         :return: None
         """
         # init data structures.
@@ -447,7 +469,7 @@ class MainChatScreen(Observable):
         self.chat_rooms_list_model.rooms_icons = rooms_icons
         self.chat_rooms_list.setModel(self.chat_rooms_list_model)
 
-    def updateRoomsList(self, data):
+    def updateRoomsList(self, data: typing.AnyStr) -> None:
         """
         Update the entire chat rooms from the updated data given by the server.
         :param data:  encoded (user, room) tuples.
@@ -465,9 +487,9 @@ class MainChatScreen(Observable):
         except AttributeError:
             pass
 
-    def userChangedRoom(self, index):
+    def userChangedRoom(self, index: ChatRoomItem) -> None:
         """
-        Moving a user to a room that has been double-clicked.
+        Transfer a user to a room that has been double-clicked.
         :param index: current clicked node (ChatRoomItem) object.
         :return: None
         """
@@ -477,13 +499,11 @@ class MainChatScreen(Observable):
             self.current_user_chat_room.setText('# ' + clicked_item)
             self.client.send_msg(PROTOCOLS["change_user_room"], clicked_item + '#' + username)
 
-    def sendButtonStatus(self, mode):
-        if mode:
-            self.send_button.setStyleSheet(ENABLED_BTN_CSS)
-        else:
-            self.send_button.setStyleSheet(DISABLED_BTN_CSS)
-
-    def soundButtonStatus(self):
+    def soundButtonStatus(self) -> None:
+        """
+        Disable/Enable sound effects of the chat.
+        :return: None
+        """
         if self.sound_enabled:
             self.sound_button.setStyleSheet("image: url(:/main_mute/mute.png);")
             self.sound_enabled = False
@@ -491,7 +511,11 @@ class MainChatScreen(Observable):
             self.sound_button.setStyleSheet("image: url(:/main_volume/volume.png);")
             self.sound_enabled = True
 
-    def searchOnlineUser(self):
+    def searchOnlineUser(self) -> None:
+        """
+        Narrow down the online users list by (username) keyword.
+        :return: None
+        """
         syntax = QRegExp.PatternSyntax(QRegExp.RegExp)
         caseSensitivity = Qt.CaseInsensitive
         regExp = QRegExp(self.search_textbox.text(), caseSensitivity, syntax)
@@ -500,6 +524,10 @@ class MainChatScreen(Observable):
         self.users_list_proxy_model.setFilterRegExp(regExp)
 
     def settingsPanel(self):
+        """
+        Reload settings panel window on click, or hide it.
+        :return:
+        """
         if self.settings_panel.isHidden():
             self.initSettingsPanel()
             self.settings_panel.show()
@@ -513,6 +541,7 @@ class MainChatScreen(Observable):
                     Qt.WindowTitleHint | Qt.Dialog | Qt.WindowMaximizeButtonHint | Qt.CustomizeWindowHint)
                 msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
                 if msgBox.exec_() == QMessageBox.Ok:
+                    # terminate client socket, close it, and restart the process of MainChatWindow Gui.
                     self.client.isTerminated = True
                     self.client.client_socket.close()
                     self.main_window.close()
@@ -520,13 +549,21 @@ class MainChatScreen(Observable):
             else:
                 self.settings_panel.hide()
 
-    def aboutPanel(self):
+    def aboutPanel(self) -> None:
+        """
+        Show copyright of all contributors used to create this application.
+        :return: None
+        """
         if self.about_panel.isHidden():
             self.about_panel.show()
         else:
             self.about_panel.hide()
 
     def initSettingsPanel(self):
+        """
+        Fetch all needed data for the settings panel window.
+        :return:
+        """
         # refresh client data from database.
         username, password = self.client.client_db_info["username"], self.client.client_db_info["password"]
         self.client.send_msg(PROTOCOLS["refresh_client_info"], username + "#" + password)
@@ -585,7 +622,11 @@ class MainChatScreen(Observable):
 
         self.replace_user_status.currentIndexChanged.connect(self.replaceUserStatus)
 
-    def replaceUserColor(self):
+    def replaceUserColor(self) -> None:
+        """
+        Replace username color on user demand.
+        :return: None
+        """
         R, G, B = randomColor()
         CSS = "color:rgb({0},{1},{2})".format(R, G, B)
         msg = toHex(R, G, B).upper() + '#' + self.client.client_db_info["username"]
@@ -593,23 +634,39 @@ class MainChatScreen(Observable):
         self.replace_username_color.setDisabled(True)
         self.client.send_msg(PROTOCOLS["replace_username_color"], msg)
 
-    def replaceUserAvatar(self):
+    def replaceUserAvatar(self) -> None:
+        """
+        Replace user Avatar on user demand.
+        :return: None
+        """
         if self.block_replaceUserAvatar is False:
             self.client.send_msg(PROTOCOLS["replace_user_avatar"], self.client.client_db_info["username"])
             self.replace_avatar.setDisabled(True)
             self.block_replaceUserAvatar = True
 
-    def replaceUserStatus(self):
+    def replaceUserStatus(self) -> None:
+        """
+        Replace user status on user demand.
+        :return: None
+        """
         self.replace_user_status.setEnabled(False)
         status = str(self.replace_user_status.currentData(Qt.DisplayRole)).upper()
         username = self.client.client_db_info["username"]
         self.client.send_msg(PROTOCOLS["replace_user_status"], status + '#' + username)
 
-    def serverStatus(self):
+    def serverStatus(self) -> None:
+        """
+        Retrieve server status: Online/Offline, by sending message and waiting for reply.
+        :return: None
+        """
         self.client.send_msg(PROTOCOLS["is_server_running"], "")
         QTimer.singleShot(5000, lambda: self.serverStatus())
 
-    def initLists(self):
+    def initLists(self) -> None:
+        """
+        Initialize for the first time the Online Users List and Chat Rooms List.
+        :return: None
+        """
         if self.users_list_loaded is False:
             self.client.send_msg(PROTOCOLS["online_users"], "")
             QTimer.singleShot(2000, lambda: self.initLists())
@@ -618,7 +675,11 @@ class MainChatScreen(Observable):
             self.client.send_msg(PROTOCOLS["chat_rooms_names"], "")
             QTimer.singleShot(2000, lambda: self.initLists())
 
-    def initImages(self):
+    def initImages(self) -> None:
+        """
+        Loading data of lists (Rooms, Users) gif animation.
+        :return: None
+        """
         self.loading_users_gif = QMovie(LOADING_GIF)
         self.loading_users_label.setMovie(self.loading_users_gif)
         self.loading_users_label.setStyleSheet(COMMON_STYLESHEET)
@@ -630,7 +691,12 @@ class MainChatScreen(Observable):
         self.loading_rooms_gif.start()
 
 
-def run(ClientTCP):
+def run(ClientTCP: Client.ClientTCP) -> None:
+    """
+    Main function, Initializing the GUI Process.
+    :param ClientTCP: Client module.
+    :return: None
+    """
     window = QtWidgets.QMainWindow()
     MCS = MainChatScreen(ClientTCP=ClientTCP)
     MCS.setupUi(window)

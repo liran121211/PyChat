@@ -1,9 +1,12 @@
+import typing
+
 from PyQt5.QtWidgets import QFrame, QLabel, QLineEdit, QPushButton
 from PyQt5.QtWidgets import QStatusBar, QWidget, QMenuBar, QMainWindow
 from PyQt5.QtCore import QRect, QSize
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QKeyEvent, QMouseEvent
 from PyQt5.Qt import Qt
 
+import Client
 from Misc import fetchWindowIcon, createFont, randomColor, toHex
 from ThreadWorker import ThreadWorker
 from Observable import Observable
@@ -254,7 +257,12 @@ class LoginScreen(Observable):
         self.signin_label.setText(_translate("MainWindow", "Sign In With:"))
         self.cancel_button.setText(_translate("MainWindow", "Cancel"))
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """
+        Triggered when key is pressed in GUI window.
+        :param event: (QKeyEvent) object
+        :return: None
+        """
         if event.key() == Qt.Key_Return and self.username_textfield.hasFocus() is True:
             self.login_button.click()
 
@@ -270,7 +278,12 @@ class LoginScreen(Observable):
         if event.key() == Qt.Key_Escape:
             exit(0)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """
+        Triggered when mouse key is pressed in GUI window.
+        :param event: (QMouseEvent) object.
+        :return: None
+        """
         if event.button() == Qt.LeftButton and self.username_textfield.hasFocus() is True:
             self.username_textfield.setText("")
 
@@ -280,13 +293,23 @@ class LoginScreen(Observable):
         if event.button() == Qt.LeftButton and self.password_register_textfield.hasFocus() is True:
             self.password_register_textfield.setText("")
 
-    def login(self):
+    def login(self) -> None:
+        """
+        Send authentication request to the server.
+        :return: None
+        """
         username = self.username_textfield.text().replace('#', '')
         password = self.password_textfield.text().replace('#', '')
         self.client.send_msg(PROTOCOLS["login_request"], username + "#" + password)
         self.login_button.setEnabled(False)
 
-    def update(self, notif, data):
+    def update(self, notif: typing.AnyStr, data: typing.AnyStr) -> None:
+        """
+        Get notifications from client TCP module.
+        :param notif: cmd (String) of command.
+        :param data: message with data (String)
+        :return: None
+        """
         if notif == "LOGIN_ERROR":
             self.login_result.hide()
             self.login_button.setEnabled(True)
@@ -317,20 +340,29 @@ class LoginScreen(Observable):
                 self.login_result.setText("Something went wrong...")
                 self.login_result.show()
 
-            elif data== "USERNAME_EXIST":
+            elif data == "USERNAME_EXIST":
                 self.login_button.setEnabled(True)
                 self.login_button.setText("Register")
                 self.login_result.setStyleSheet(ERROR_LOGIN_LABEL_CSS)
                 self.login_result.setText("Username already exists!")
                 self.login_result.show()
 
-    def loadMainChatWindow(self):
+    def loadMainChatWindow(self) -> None:
+        """
+        Load next window (MainChatWindow).
+        Detach Client TCP object from the current GUI.
+        :return: None
+        """
         self.thread_worker.terminate()
         self.main_window.close()
         self.client.detach(self)
         MainChatScreen.run(ClientTCP=self.client)
 
-    def registerForm(self):
+    def registerForm(self) -> None:
+        """
+        Load Registration Form and replace the current Login Form.
+        :return: None
+        """
         font = QFont()
         font.setFamily("Comic Sans MS")
 
@@ -366,7 +398,13 @@ class LoginScreen(Observable):
         self.password_register_textfield.show()
         self.password_register_icon_label.show()
 
-    def registerProcess(self):
+    def registerProcess(self) -> None:
+        """
+        Gather all required data and send the registration form to the server.
+        :return: None
+        """
+
+        # validate data before preceding with the registration process.
         validation = self.formValidator()
 
         if validation == "VALIDATED":
@@ -389,7 +427,11 @@ class LoginScreen(Observable):
             self.login_result.setText(validation)
             self.login_result.show()
 
-    def LoginForm(self):
+    def LoginForm(self) -> None:
+        """
+        Load Login Form and replace the current Registration Form.
+        :return: None
+        """
         self.login_button.setEnabled(True)
 
         self.login_button.hide()
@@ -426,7 +468,11 @@ class LoginScreen(Observable):
         self.register_button.show()
         self.login_result.show()
 
-    def formValidator(self):
+    def formValidator(self) -> typing.AnyStr:
+        """
+        Avoid invalid data and look up for errors before dispatching the Registration Form.
+        :return: None
+        """
         if len(self.username_textfield.text()) > 12:
             return "Username contains more than 12 characters."
 
@@ -451,7 +497,12 @@ class LoginScreen(Observable):
         return "VALIDATED"
 
 
-def run(ClientTCP):
+def run(ClientTCP: Client.ClientTCP) -> None:
+    """
+    Main function, Initializing the GUI Process.
+    :param ClientTCP: Client module.
+    :return: None
+    """
     window = QMainWindow()
     next_screen = LoginScreen(ClientTCP=ClientTCP)
     next_screen.setupUi(window)

@@ -12,6 +12,7 @@ import time
 import sys
 import LoginScreen
 import Client
+import typing
 
 # noinspection PyUnresolvedReferences
 from StyleSheets.loading_screen_css import *
@@ -95,7 +96,13 @@ class LoadingScreen(object):
         self.loading_label.setText(_translate("LoadingWindow", "Loading sound files....."))
 
     # noinspection PyUnresolvedReferences
-    def update(self, notif, data):
+    def update(self, notif: typing.AnyStr, data: typing.AnyStr) -> None:
+        """
+        Get notifications from client TCP module.
+        :param notif: cmd (String) of command.
+        :param data: message with data (String)
+        :return: None
+        """
         time.sleep(random.uniform(0.2, 1))
         if notif == "GRAPHICS_LOAD":
             fetchSound()
@@ -133,7 +140,11 @@ class LoadingScreen(object):
             self.thread_worker.finished.emit(100)
 
 
-def run():
+def run() -> None:
+    """
+    Main function, Initializing the GUI Process.
+    :return: None
+    """
     app = QApplication(sys.argv)
     window = QMainWindow()
     next_window = LoadingScreen()
@@ -142,12 +153,12 @@ def run():
     sys.exit(app.exec_())
 
 
-def restart():
+def restart() -> None:
+    """
+    Restart application.
+    :return: None
+    """
     window = QMainWindow()
     next_window = LoadingScreen()
     next_window.setupUi(window)
     window.show()
-
-
-if __name__ == "__main__":
-    run()
