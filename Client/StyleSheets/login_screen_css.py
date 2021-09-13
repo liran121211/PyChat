@@ -8,9 +8,12 @@
 
 from PyQt5 import QtCore
 
-LOGIN_BTN = """QPushButton{ color: white; background-color: rgb(58, 134, 255); border-radius: 20px;}"""
+LOGIN_BTN = """QPushButton{ color: white; background-color: rgb(58, 134, 255); border-radius: 20px;} QPushButton:disabled{ color: black; background-color: rgb(151, 151, 151); border-radius: 20px;}"""
 CANCEL_BTN = """QPushButton{ color: white; background-color: rgb(236, 31, 39); border-radius: 20px;}"""
-WAITING_BTN = """QPushButton{ color: white; background-color: rgb(176, 176, 176); border-radius: 20px;}"""
+REGISTER_BTN_CSS = """QPushButton{ color: white; background-color: rgb(34, 177, 76); border-radius: 20px;} QPushButton:disabled{ color: black; background-color: rgb(151, 151, 151); border-radius: 20px;}"""
+TO_REGISTRATION_BTN = """QPushButton:hover{background:rgba(128, 128, 255, 0.1); border: 0px; color: rgb(4,59,212);  border-radius: 50px; } QPushButton:disabled {background:white ;border: 0px; color: rgb(151,151,151); } QPushButton{ border: 0px; color: rgb(4,59,212); }"""
+ERROR_LOGIN_LABEL_CSS = """QLabel{color: rgb(255,0,0); background-color: rgba(255,150,150,0.25); border-radius: 20px; }"""
+SUCCESS_REGISTRATION_LABEL_CSS = """QLabel{color: rgb(0,113,0); background-color: rgba(60,240,78,0.25); border-radius: 20px; }"""
 
 qt_resource_data = b"\
 \x00\x00\x24\x49\

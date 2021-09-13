@@ -1,7 +1,7 @@
 import threading
 from pathlib import Path
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt, QRect, QRegExp, QSize, QTimer, QThread, QModelIndex
+from PyQt5.QtCore import Qt, QRect, QRegExp, QSize, QTimer
 from PyQt5.QtGui import QIcon, QPixmap, QColor, QMovie
 from PyQt5.QtSvg import QSvgWidget
 from PyQt5.QtWidgets import QFrame, QMessageBox, QPushButton, QLabel, QLineEdit, QCommandLinkButton, QComboBox, \
@@ -16,7 +16,7 @@ from Models.MessagesModel import MessagesModel
 from Models.OnlineUsersModel import OnlineUsersModel
 from Models.ChatRoomsModel import ChatRoomsModel, ChatRoomItem
 from Misc import createFont, timeStamp, fetchAvatar, fetchWindowIcon, toRGB, randomColor, toHex, fetchRoomIcon, \
-    fetchCredits, fetchImages
+    fetchCredits
 from ThreadWorker import ThreadWorker
 from Protocol import *
 from Observable import Observable
@@ -44,16 +44,20 @@ class MainChatScreen(Observable):
 
     def setupUi(self, MainChatWindow):
         self.main_window = MainChatWindow
-        MainChatWindow.setObjectName("MainChatWindow")
         MainChatWindow.setFixedSize(1574, 782)
+        MainChatWindow.setObjectName("MainChatWindow")
         MainChatWindow.setWindowIcon(fetchWindowIcon())
         MainChatWindow.setStyleSheet("background-color: rgb(255, 255, 255);")
+        MainChatWindow.setWindowTitle("PyChat - Communicate with People")
+        MainChatWindow.keyPressEvent = self.keyPressEvent
+        MainChatWindow.closeEvent = lambda event: event.accept()
+
         self.centralwidget = QtWidgets.QWidget(MainChatWindow)
         self.centralwidget.setObjectName("centralwidget")
 
         self.settings_frame = QFrame(self.centralwidget)
-        self.settings_frame.setObjectName("settings_frame")
         self.settings_frame.setGeometry(QtCore.QRect(10, 700, 311, 41))
+        self.settings_frame.setObjectName("settings_frame")
         self.settings_frame.setFrameShape(QFrame.Box)
         self.settings_frame.setFrameShadow(QFrame.Raised)
         self.settings_frame.setStyleSheet(COMMON_STYLESHEET)
@@ -78,11 +82,11 @@ class MainChatScreen(Observable):
         self.users_list.verticalScrollBar().setStyleSheet(SCROLL_BAR_CSS)
 
         self.users_list_label = QtWidgets.QLabel(self.centralwidget)
+        self.users_list_label.setGeometry(QtCore.QRect(1340, 60, 221, 50))
         self.users_list_label.setObjectName("users_list_label")
         self.users_list_label.setText("-----------Online Users-----------")
         self.users_list_label.setAlignment(Qt.AlignCenter)
         self.users_list_label.setFont(createFont("Eras Medium ITC", 15, False, 50))
-        self.users_list_label.setGeometry(QtCore.QRect(1340, 60, 221, 50))
         self.users_list_label.setStyleSheet(COMMON_STYLESHEET)
 
         self.chat_rooms_list = QtWidgets.QTreeView(self.centralwidget)
@@ -95,50 +99,51 @@ class MainChatScreen(Observable):
         self.chat_rooms_list.verticalScrollBar().setStyleSheet(SCROLL_BAR_CSS)
 
         self.chat_rooms_list_label = QtWidgets.QLabel(self.centralwidget)
+        self.chat_rooms_list_label.setGeometry(QtCore.QRect(10, 0, 311, 65))
         self.chat_rooms_list_label.setObjectName("chat_rooms_list_label")
         self.chat_rooms_list_label.setText("--------------------Chat Rooms--------------------")
         self.chat_rooms_list_label.setAlignment(Qt.AlignCenter)
         self.chat_rooms_list_label.setFont(createFont("Eras Medium ITC", 15, False, 50))
-        self.chat_rooms_list_label.setGeometry(QtCore.QRect(10, 0, 311, 65))
         self.chat_rooms_list_label.setStyleSheet(COMMON_STYLESHEET)
 
         self.message_textfield = QtWidgets.QLineEdit(self.centralwidget)
         self.message_textfield.setGeometry(QtCore.QRect(350, 700, 931, 41))
+        self.message_textfield.setObjectName("message_textfield")
         self.message_textfield.setStyleSheet(COMMON_STYLESHEET)
         self.message_textfield.setClearButtonEnabled(False)
-        self.message_textfield.setObjectName("message_textfield")
         self.message_textfield.setFont(createFont("Eras Medium ITC", 13, False, 50))
+        self.message_textfield.textEdited.connect(self.messageFieldStatus)
 
         self.user_avatar = QSvgWidget(self.settings_frame)
         self.user_avatar.setGeometry(10, 7, 30, 30)
         self.user_avatar.setObjectName("user_avatar")
+        self.user_avatar.renderer().load(fetchAvatar(self.client.client_db_info["username"], "SVG"))
 
         self.username_label = QtWidgets.QLabel(self.settings_frame)
         self.username_label.setGeometry(QtCore.QRect(50, 10, 121, 21))
         self.username_label.setObjectName("username_label")
         self.username_label.setFont(createFont("Eras Medium ITC", 14, False, 50))
+        self.username_label.setText(self.client.client_db_info["username"])
 
         self.settings_button = QtWidgets.QPushButton(self.settings_frame)
-        self.settings_button.setObjectName("settings_button")
         self.settings_button.setGeometry(QtCore.QRect(265, 6, 41, 31))
+        self.settings_button.setObjectName("settings_button")
         self.settings_button.clicked.connect(self.settingsPanel)
         self.settings_button.setStyleSheet("image: url(:/settings_button/settings2.png);")
 
         self.sound_button = QtWidgets.QPushButton(self.settings_frame)
-        self.sound_button.setObjectName("settings_button")
         self.sound_button.setGeometry(QtCore.QRect(223, 6, 41, 31))
+        self.sound_button.setObjectName("settings_button")
         self.sound_button.setStyleSheet("image: url(:/main_volume/volume.png);")
         self.sound_button.clicked.connect(self.soundButtonStatus)
 
         self.send_button = QtWidgets.QPushButton(self.centralwidget)
         self.send_button.setGeometry(QtCore.QRect(1290, 710, 31, 21))
-        self.send_button.setContextMenuPolicy(Qt.DefaultContextMenu)
-        self.send_button.setStyleSheet("image: url(:/send_button/send_button1.png);\n"
-                                       "background-color: rgb(243, 243, 243);\n"
-                                       "border: 0px;\n"
-                                       "")
-        self.send_button.setAutoDefault(False)
         self.send_button.setObjectName("send_button")
+        self.send_button.setContextMenuPolicy(Qt.DefaultContextMenu)
+        self.send_button.clicked.connect(self.sendMessage)
+        self.send_button.setStyleSheet(SEND_BTN_CSS)
+        self.send_button.setAutoDefault(False)
 
         self.textfield_label_right = QtWidgets.QLabel(self.centralwidget)
         self.textfield_label_right.setObjectName("textfield_label_right")
@@ -147,32 +152,32 @@ class MainChatScreen(Observable):
         self.textfield_label_right.setFrameShape(QFrame.NoFrame)
 
         self.textfield_label_left = QtWidgets.QLabel(self.centralwidget)
+        self.textfield_label_left.setGeometry(QtCore.QRect(330, 700, 61, 41))
         self.textfield_label_left.setObjectName("textfield_label_left")
         self.textfield_label_left.setFrameShape(QFrame.NoFrame)
-        self.textfield_label_left.setGeometry(QtCore.QRect(330, 700, 61, 41))
         self.textfield_label_left.setStyleSheet(COMMON_STYLESHEET)
 
         self.toolbar_frame = QFrame(self.centralwidget)
-        self.toolbar_frame.setObjectName("toolbar_frame")
         self.toolbar_frame.setGeometry(QtCore.QRect(330, 0, 1231, 51))
+        self.toolbar_frame.setObjectName("toolbar_frame")
         self.toolbar_frame.setFrameShape(QFrame.Box)
         self.toolbar_frame.setFrameShadow(QFrame.Raised)
         self.toolbar_frame.setStyleSheet(COMMON_STYLESHEET)
 
         self.search_button = QPushButton(self.toolbar_frame)
-        self.search_button.setObjectName("search_button")
         self.search_button.setGeometry(QRect(1185, 12, 41, 23))
+        self.search_button.setObjectName("search_button")
         self.search_button.setStyleSheet("image: url(:/search/search_icon.png);\n" + COMMON_STYLESHEET)
         self.search_button.clicked.connect(self.searchOnlineUser)
 
         self.search_line = QLabel(self.toolbar_frame)
-        self.search_line.setObjectName("search_line")
         self.search_line.setGeometry(QRect(1052, 22, 141, 16))
+        self.search_line.setObjectName("search_line")
         self.search_line.setText("__________________________")
 
         self.search_textbox = QLineEdit(self.toolbar_frame)
-        self.search_textbox.setObjectName("search_textbox")
         self.search_textbox.setGeometry(QRect(1052, 12, 143, 20))
+        self.search_textbox.setObjectName("search_textbox")
         self.search_textbox.setText("Look up for user...")
         self.search_textbox.mousePressEvent = lambda event: self.search_textbox.setText("")
 
@@ -197,9 +202,9 @@ class MainChatScreen(Observable):
         self.replace_username_color.setObjectName("replace_username_color")
 
         self.server_offline_label = QLabel(self.centralwidget)
+        self.server_offline_label.setGeometry(QRect(540, 280, 581, 91))
         self.server_offline_label.setObjectName("server_offline_label")
         self.server_offline_label.setText("Server is offline now!")
-        self.server_offline_label.setGeometry(QRect(540, 280, 581, 91))
         self.server_offline_label.setTextFormat(Qt.PlainText)
         self.server_offline_label.setFont(createFont("Eras Medium ITC", 42, False, 50))
         self.server_offline_label.setStyleSheet("color: rgb(255,0,0)")
@@ -221,14 +226,14 @@ class MainChatScreen(Observable):
         self.about_panel.hide()
 
         self.about_button = QPushButton(self.settings_frame)
-        self.about_button.setObjectName(u"about_button")
         self.about_button.setGeometry(QRect(180, 6, 41, 31))
+        self.about_button.setObjectName(u"about_button")
         self.about_button.setStyleSheet(u"image: url(:/about/about.png);")
         self.about_button.clicked.connect(self.aboutPanel)
 
         self.about_credits_text = QTextEdit(self.about_panel)
-        self.about_credits_text.setObjectName(u"about_credits_text")
         self.about_credits_text.setGeometry(QRect(10, 10, 380, 380))
+        self.about_credits_text.setObjectName(u"about_credits_text")
         self.about_credits_text.setText(fetchCredits())
         self.about_credits_text.verticalScrollBar().setStyleSheet(SCROLL_BAR_CSS)
 
@@ -269,33 +274,18 @@ class MainChatScreen(Observable):
         self.statusbar = QtWidgets.QStatusBar(MainChatWindow)
         self.statusbar.setObjectName("statusbar")
         MainChatWindow.setStatusBar(self.statusbar)
-        self.retranslateUi(MainChatWindow)
         QtCore.QMetaObject.connectSlotsByName(MainChatWindow)
-
-        # Connect Events and Buttons
-        MainChatWindow.keyPressEvent = self.keyPressEvent
-        self.main_window.closeEvent = self.closeEvent
-        self.send_button.clicked.connect(self.sendMessage)
-        self.message_textfield.textEdited.connect(self.messageFieldStatus)
-
-        # Settings panel
-        self.username_label.setText(self.client.client_db_info["username"])
-        self.user_avatar.renderer().load(fetchAvatar(username=self.client.client_db_info["username"], obj_type="SVG"))
 
         # Misc...
         self.users_list_loaded = False
         self.rooms_list_loaded = False
         self.initImages()
         self.initLists()
-        self.serverStatus()
         self.initSettingsPanel()
+        self.serverStatus()
 
         self.window_loaded = True
         self.main_window.show()
-
-    def retranslateUi(self, MainChatWindow):
-        translate = QtCore.QCoreApplication.translate
-        MainChatWindow.setWindowTitle(translate("PyChat - Communicate with People", "PyChat - Communicate with People"))
 
     def update(self, notif, data=None):
         """
@@ -350,9 +340,9 @@ class MainChatScreen(Observable):
         if notif == "REPLACE_USER_AVATAR":
             if data == "SUCCESS":
                 self.block_replaceUserAvatar = False
-                self.replace_avatar.setEnabled(True)
                 username = self.client.client_db_info["username"]
                 self.settings_panel_avatar.setPixmap(fetchAvatar(username, "PIXMAP").scaled(150, 150))
+                self.replace_avatar.setEnabled(True)
                 self.require_restart = True
 
         if notif == "REPLACE_USERNAME_COLOR":
@@ -380,6 +370,7 @@ class MainChatScreen(Observable):
             username = self.client.client_db_info["username"]
             text_direction = str(self.message_textfield.isLeftToRight())
             text_message = self.message_textfield.text().replace('#', '')
+
             dispatch_data = username + '#' + text_direction + '#' + text_message
             self.client.send_msg(PROTOCOLS["client_message"], dispatch_data)
             self.message_textfield.setText("")
@@ -412,8 +403,9 @@ class MainChatScreen(Observable):
         """
         # decode users to list
         decoded_users = online_users.split('##')
+
+        # decode user data to list
         for user in decoded_users:
-            # decode user data to list
             decoded_user = user.split('#')
             username, online, avatar = decoded_user[0], decoded_user[1], decoded_user[2]
             status, color = decoded_user[3], decoded_user[4]
@@ -486,11 +478,10 @@ class MainChatScreen(Observable):
             self.client.send_msg(PROTOCOLS["change_user_room"], clicked_item + '#' + username)
 
     def sendButtonStatus(self, mode):
-        CSS = COMMON_STYLESHEET
         if mode:
-            self.send_button.setStyleSheet("image: url(:/send_button/send_button1.png);\n" + CSS)
+            self.send_button.setStyleSheet(ENABLED_BTN_CSS)
         else:
-            self.send_button.setStyleSheet("image: url(:/send_button_disabled/send_button_disabled.png);\n" + CSS)
+            self.send_button.setStyleSheet(DISABLED_BTN_CSS)
 
     def soundButtonStatus(self):
         if self.sound_enabled:
@@ -499,9 +490,6 @@ class MainChatScreen(Observable):
         else:
             self.sound_button.setStyleSheet("image: url(:/main_volume/volume.png);")
             self.sound_enabled = True
-
-    def closeEvent(self, event):
-        event.accept()
 
     def searchOnlineUser(self):
         syntax = QRegExp.PatternSyntax(QRegExp.RegExp)
@@ -518,9 +506,9 @@ class MainChatScreen(Observable):
         else:
             if self.require_restart:
                 msgBox = QMessageBox()
-                msgBox.setIcon(QMessageBox.Warning)
+                msgBox.setIcon(QMessageBox.Information)
                 msgBox.setText("Restart to apply changes.")
-                msgBox.setWindowTitle("Warning")
+                msgBox.setWindowTitle("Information")
                 msgBox.setWindowFlags(
                     Qt.WindowTitleHint | Qt.Dialog | Qt.WindowMaximizeButtonHint | Qt.CustomizeWindowHint)
                 msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
@@ -563,8 +551,7 @@ class MainChatScreen(Observable):
         self.replace_avatar.setText("Replace Current Avatar")
         self.replace_avatar.setFont(createFont("Eras Medium ITC", 13, True, 50))
         self.replace_avatar.clicked.connect(self.replaceUserAvatar)
-        self.replace_avatar.setStyleSheet("""QPushButton:hover{background:rgba(128, 128, 255, 0.1); border: 0px;}
-        QPushButton:disabled {background:rgba(128, 128, 255, 0.1); border: 0px;}""")
+        self.replace_avatar.setStyleSheet(REPLACE_AVATAR_CSS)
 
         username_icon = QIcon()
         username_icon.addFile(":/change_username_color/change_username_color.png", QSize(), QIcon.Normal, QIcon.Off)
@@ -574,8 +561,7 @@ class MainChatScreen(Observable):
         self.replace_username_color.setText("Replace Username Color")
         self.replace_username_color.setFont(createFont("Eras Medium ITC", 13, True, 50))
         self.replace_username_color.clicked.connect(self.replaceUserColor)
-        self.replace_username_color.setStyleSheet("""QPushButton:hover{background:rgba(128, 128, 255, 0.1); border: 0px;}
-        QPushButton:disabled{background:rgba(128, 128, 255, 0.1); border: 0px;}""")
+        self.replace_username_color.setStyleSheet(REPLACE_USERNAME_CSS)
 
         self.replace_user_status.setGeometry(x_loc - 75, 240, 158, 30)
         self.replace_user_status.setFont(createFont("Eras Medium ITC", 13, True, 50))
@@ -596,6 +582,7 @@ class MainChatScreen(Observable):
             self.replace_user_status.setCurrentIndex(1)
         elif self.client.client_db_info["status"] == "UNAVAILABLE":
             self.replace_user_status.setCurrentIndex(2)
+
         self.replace_user_status.currentIndexChanged.connect(self.replaceUserStatus)
 
     def replaceUserColor(self):
@@ -632,7 +619,6 @@ class MainChatScreen(Observable):
             QTimer.singleShot(2000, lambda: self.initLists())
 
     def initImages(self):
-        fetchImages()
         self.loading_users_gif = QMovie(LOADING_GIF)
         self.loading_users_label.setMovie(self.loading_users_gif)
         self.loading_users_label.setStyleSheet(COMMON_STYLESHEET)

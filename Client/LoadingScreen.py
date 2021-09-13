@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from Misc import fetchWindowIcon, createFont
 from ThreadWorker import ThreadWorker
 from Protocol import debugMessages
-from Misc import fetchSound
+from Misc import fetchSound, fetchImages
 
 import random
 import threading
@@ -30,7 +30,7 @@ class LoadingScreen(object):
         LoadingWindow.setObjectName("LoadingWindow")
         LoadingWindow.setFixedSize(672, 395)
         LoadingWindow.setWindowIcon(fetchWindowIcon())
-        LoadingWindow.setWindowFlags(Qt.FramelessWindowHint)
+        LoadingWindow.setWindowFlags(Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
         LoadingWindow.setAttribute(Qt.WA_TranslucentBackground, True)
 
         self.centralwidget = QWidget(LoadingWindow)
@@ -99,36 +99,37 @@ class LoadingScreen(object):
         time.sleep(random.uniform(0.2, 1))
         if notif == "GRAPHICS_LOAD":
             fetchSound()
+            fetchImages()
             self.thread_worker.progress.emit(10)
-            self.loading_label.setText(debugMessages(notif))
+            self.loading_label.setText(debugMessages(notif, False))
 
         if notif == "CONNECT":
             self.thread_worker.progress.emit(50)
-            self.loading_label.setText(debugMessages(notif))
+            self.loading_label.setText(debugMessages(notif, False))
 
         if notif == "TIMEOUT":
             # noinspection PyUnresolvedReferences
             self.thread_worker.progress.emit(50)
-            self.loading_label.setText(debugMessages(notif))
+            self.loading_label.setText(debugMessages(notif, False))
 
         if notif == "CONNECTED":
             self.thread_worker.progress.emit(70)
-            self.loading_label.setText(debugMessages(notif))
+            self.loading_label.setText(debugMessages(notif, False))
 
         if notif == "CLIENT_DB_CONNECT":
             self.thread_worker.progress.emit(90)
-            self.loading_label.setText(debugMessages(notif))
+            self.loading_label.setText(debugMessages(notif, False))
 
         if notif == "RETRY_DB_CONNECTION":
             self.thread_worker.progress.emit(90)
-            self.loading_label.setText(debugMessages(notif))
+            self.loading_label.setText(debugMessages(notif, False))
 
         if notif == "DB_CONNECTION_ERROR":
             self.thread_worker.progress.emit(90)
-            self.loading_label.setText(debugMessages(notif))
+            self.loading_label.setText(debugMessages(notif, False))
 
         if notif == "CLIENT_DB_CONNECTED":
-            self.loading_label.setText(debugMessages(notif))
+            self.loading_label.setText(debugMessages(notif, False))
             self.thread_worker.finished.emit(100)
 
 

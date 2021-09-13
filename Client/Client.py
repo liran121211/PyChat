@@ -136,6 +136,8 @@ class ClientTCP(Observable):
         if cmd == "IS_SERVER_RUNNING":
             pass
 
+        if cmd == "REGISTER_USER":
+            self.notify("REGISTER_USER", msg)
 
 if __name__ == "__main__":
     client = ClientTCP()

@@ -7,6 +7,12 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore
+SEND_BTN_CSS = """image: url(:/send_button/send_button1.png);background-color: rgb(243, 243, 243);border: 0px;"""
+ENABLED_BTN_CSS = """image: url(:/send_button/send_button1.png);background-color: rgb(243, 243, 243);border: 0px;border-radius: 10px;"""
+DISABLED_BTN_CSS = """image: url(:/send_button_disabled/send_button_disabled.png);background-color: rgb(243, 243, 243);border: 0px;border-radius: 10px;"""
+REPLACE_AVATAR_CSS = """QPushButton:hover{background:rgba(128, 128, 255, 0.1); border: 0px;}QPushButton:disabled {background:rgba(128, 128, 255, 0.1); border: 0px;}"""
+REPLACE_USERNAME_CSS = """QPushButton:hover{background:rgba(128, 128, 255, 0.1); border: 0px;}
+        QPushButton:disabled{background:rgba(128, 128, 255, 0.1); border: 0px;}"""
 
 COMMON_STYLESHEET = "background-color: rgb(243, 243, 243);\nborder-radius: 10px;"
 

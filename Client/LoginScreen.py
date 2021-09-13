@@ -1,10 +1,10 @@
-from PyQt5.QtWidgets import QFrame, QLabel, QLineEdit, QPushButton, QCommandLinkButton
+from PyQt5.QtWidgets import QFrame, QLabel, QLineEdit, QPushButton
 from PyQt5.QtWidgets import QStatusBar, QWidget, QMenuBar, QMainWindow
 from PyQt5.QtCore import QRect, QSize
 from PyQt5.QtGui import QFont
 from PyQt5.Qt import Qt
 
-from Misc import fetchWindowIcon, createFont
+from Misc import fetchWindowIcon, createFont, randomColor, toHex
 from ThreadWorker import ThreadWorker
 from Observable import Observable
 from Protocol import PROTOCOLS
@@ -31,7 +31,7 @@ class LoginScreen(Observable):
         LoginWindow.setFixedSize(678, 582)
         LoginWindow.setWindowIcon(fetchWindowIcon())
         LoginWindow.setAttribute(Qt.WA_TranslucentBackground, True)
-        LoginWindow.setWindowFlags(Qt.FramelessWindowHint)
+        LoginWindow.setWindowFlags(Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
         LoginWindow.keyPressEvent = self.keyPressEvent
 
         self.centralwidget = QWidget(LoginWindow)
@@ -57,7 +57,7 @@ class LoginScreen(Observable):
         font.setFamily("Comic Sans MS")
         font.setStyleStrategy(QFont.PreferDefault)
         self.username_textfield = QLineEdit(self.background_frame)
-        self.username_textfield.setGeometry(QRect(90, 110, 231, 31))
+        self.username_textfield.setGeometry(QRect(90, 110, 231, 29))
         self.username_textfield.setFont(font)
         self.username_textfield.setMaxLength(100)
         self.username_textfield.setFrame(False)
@@ -67,7 +67,7 @@ class LoginScreen(Observable):
         self.username_textfield.mousePressEvent = self.mousePressEvent
 
         self.password_textfield = QLineEdit(self.background_frame)
-        self.password_textfield.setGeometry(QRect(90, 170, 231, 31))
+        self.password_textfield.setGeometry(QRect(90, 170, 231, 29))
         self.password_textfield.setFrame(False)
         self.password_textfield.setEchoMode(QLineEdit.PasswordEchoOnEdit)
         self.password_textfield.setClearButtonEnabled(True)
@@ -111,9 +111,12 @@ class LoginScreen(Observable):
         self.cancel_button.setObjectName("cancel_button")
         self.cancel_button.clicked.connect(exit)
 
-        self.forgot_password_link_button = QCommandLinkButton(self.background_frame)
-        self.forgot_password_link_button.setGeometry(QtCore.QRect(80, 320, 201, 41))
-        self.forgot_password_link_button.setObjectName("forgot_password_link_button")
+        self.register_button = QPushButton(self.background_frame)
+        self.register_button.setGeometry(QtCore.QRect(228, 210, 71, 21))
+        self.register_button.setObjectName("register_button")
+        self.register_button.setStyleSheet(TO_REGISTRATION_BTN)
+        self.register_button.setFont(createFont("MS Shell Dlg 2", 8, False, 20))
+        self.register_button.clicked.connect(self.registerForm)
 
         self.google_logo_label = QLabel(self.background_frame)
         self.google_logo_label.setGeometry(QRect(20, 470, 71, 51))
@@ -160,13 +163,47 @@ class LoginScreen(Observable):
         self.password_line.setFrameShadow(QFrame.Sunken)
         self.password_line.setObjectName("password_line")
 
+        self.password_register_line = QFrame(self.background_frame)
+        self.password_register_line.setEnabled(True)
+        self.password_register_line.setGeometry(QRect(90, 250, 231, 20))
+        self.password_register_line.setFont(font)
+        self.password_register_line.setLineWidth(1)
+        self.password_register_line.setFrameShape(QFrame.HLine)
+        self.password_register_line.setFrameShadow(QFrame.Sunken)
+        self.password_register_line.setObjectName("password_register_line")
+        self.password_register_line.hide()
+
+        self.password_register_textfield = QLineEdit(self.background_frame)
+        self.password_register_textfield.setGeometry(QRect(90, 230, 231, 29))
+        self.password_register_textfield.setFrame(False)
+        self.password_register_textfield.setEchoMode(QLineEdit.PasswordEchoOnEdit)
+        self.password_register_textfield.setClearButtonEnabled(True)
+        self.password_register_textfield.setObjectName("password_register_textfield")
+        self.password_register_textfield.mousePressEvent = self.mousePressEvent
+        self.password_register_textfield.hide()
+
+        self.password_register_icon_label = QLabel(self.background_frame)
+        self.password_register_icon_label.setGeometry(QRect(30, 230, 61, 41))
+        self.password_register_icon_label.setStyleSheet("image: url(:/password_icon/password_icon1.png);")
+        self.password_register_icon_label.setText("")
+        self.password_register_icon_label.setObjectName("password_icon_label")
+        self.password_register_icon_label.hide()
+
         font = QFont()
-        font.setFamily("Comic Sans MS")
-        font.setPointSize(9)
+        font.setFamily("MS Shell Dlg 2")
+        font.setPointSize(8)
+        self.register_text_label = QLabel(self.background_frame)
+        self.register_text_label.setGeometry(QtCore.QRect(80, 210, 149, 21))
+        self.register_text_label.setFont(font)
+        self.register_text_label.setObjectName("register_text_label")
+        self.register_text_label.setText("Don't have a PyChat Account?")
+
         self.login_result = QLabel(self.background_frame)
-        self.login_result.setGeometry(QtCore.QRect(90, 210, 221, 16))
-        self.login_result.setFont(font)
+        self.login_result.setGeometry(QtCore.QRect(75, 310, 221, 25))
+        self.login_result.setFont(createFont("MS Shell Dlg 2", 10, False, 20))
         self.login_result.setObjectName("login_result")
+        self.login_result.setAlignment(Qt.AlignCenter)
+        self.login_result.hide()
 
         font = QFont()
         font.setUnderline(False)
@@ -202,6 +239,10 @@ class LoginScreen(Observable):
         self.thread_worker.finished.connect(self.loadMainChatWindow)
         self.thread_worker.start()
 
+        self.login_result.raise_()
+        self.username_textfield.raise_()
+        self.password_textfield.raise_()
+
     def retranslateUi(self, login_screen):
         _translate = QtCore.QCoreApplication.translate
         login_screen.setWindowTitle(_translate("Welcome to PyChat", "Welcome to PyChat"))
@@ -209,7 +250,7 @@ class LoginScreen(Observable):
         self.username_textfield.setText(_translate("MainWindow", "Your Username..."))
         self.password_textfield.setText(_translate("MainWindow", "password"))
         self.login_button.setText(_translate("MainWindow", "Login"))
-        self.forgot_password_link_button.setText(_translate("MainWindow", "Forgot Your Password?"))
+        self.register_button.setText(_translate("MainWindow", "Register now"))
         self.signin_label.setText(_translate("MainWindow", "Sign In With:"))
         self.cancel_button.setText(_translate("MainWindow", "Cancel"))
 
@@ -236,19 +277,24 @@ class LoginScreen(Observable):
         if event.button() == Qt.LeftButton and self.password_textfield.hasFocus() is True:
             self.password_textfield.setText("")
 
+        if event.button() == Qt.LeftButton and self.password_register_textfield.hasFocus() is True:
+            self.password_register_textfield.setText("")
+
     def login(self):
-        username = self.username_textfield.text()
-        password = self.password_textfield.text()
+        username = self.username_textfield.text().replace('#', '')
+        password = self.password_textfield.text().replace('#', '')
         self.client.send_msg(PROTOCOLS["login_request"], username + "#" + password)
-        self.login_button.setDisabled(True)
+        self.login_button.setEnabled(False)
 
     def update(self, notif, data):
         if notif == "LOGIN_ERROR":
-            time.sleep(0.5)
-            self.login_result.setText("Invalid username or password.")
-            self.login_result.setStyleSheet("color: rgb(236, 31, 39);")
-            self.login_result.setText(" ")
+            self.login_result.hide()
             self.login_button.setEnabled(True)
+            self.login_result.setStyleSheet(ERROR_LOGIN_LABEL_CSS)
+            self.login_result.setText("Invalid username or password")
+            self.login_result.show()
+            time.sleep(2)
+            self.login_result.hide()
 
         if notif == "LOGIN_OK":
             # notification to BOT
@@ -257,11 +303,152 @@ class LoginScreen(Observable):
             # Send beacon to load the MainChatScreen
             self.thread_worker.finished.emit(100)
 
+        if notif == "REGISTER_USER":
+            if data == "SUCCESS":
+                self.cancel_button.click()
+                self.login_result.setStyleSheet(SUCCESS_REGISTRATION_LABEL_CSS)
+                self.login_result.setText("You have successfully signed up for PyChat")
+                self.register_button.setEnabled(False)
+                self.login_result.show()
+
+            elif data == "FAIL":
+                self.cancel_button.click()
+                self.login_result.setStyleSheet(ERROR_LOGIN_LABEL_CSS)
+                self.login_result.setText("Something went wrong...")
+                self.login_result.show()
+
+            elif data== "USERNAME_EXIST":
+                self.login_button.setEnabled(True)
+                self.login_button.setText("Register")
+                self.login_result.setStyleSheet(ERROR_LOGIN_LABEL_CSS)
+                self.login_result.setText("Username already exists!")
+                self.login_result.show()
+
     def loadMainChatWindow(self):
         self.thread_worker.terminate()
         self.main_window.close()
         self.client.detach(self)
         MainChatScreen.run(ClientTCP=self.client)
+
+    def registerForm(self):
+        font = QFont()
+        font.setFamily("Comic Sans MS")
+
+        self.login_button.hide()
+        self.cancel_button.hide()
+        self.register_button.hide()
+        self.register_text_label.hide()
+        self.login_button.setText("Register")
+        self.login_button.clicked.disconnect()
+        self.login_button.clicked.connect(self.registerProcess)
+        self.cancel_button.clicked.disconnect()
+        self.cancel_button.clicked.connect(self.LoginForm)
+
+        self.login_result.setGeometry(QtCore.QRect(41, 350, 280, 25))
+        self.login_button.setGeometry(QtCore.QRect(70, 290, 111, 41))
+        self.cancel_button.setGeometry(QtCore.QRect(190, 290, 111, 41))
+
+        self.login_button.setStyleSheet(REGISTER_BTN_CSS)
+        self.login_result.setStyleSheet(ERROR_LOGIN_LABEL_CSS)
+
+        self.password_textfield.setEchoMode(QLineEdit.Normal)
+        self.password_register_textfield.setEchoMode(QLineEdit.Normal)
+
+        self.password_textfield.setFont(font)
+        self.password_register_textfield.setFont(font)
+        self.username_textfield.setText("Enter a username...")
+        self.password_textfield.setText("Enter your password...")
+        self.password_register_textfield.setText("Enter your password again...")
+
+        self.login_button.show()
+        self.cancel_button.show()
+        self.password_register_line.show()
+        self.password_register_textfield.show()
+        self.password_register_icon_label.show()
+
+    def registerProcess(self):
+        validation = self.formValidator()
+
+        if validation == "VALIDATED":
+            self.login_button.setEnabled(False)
+            self.login_button.setText("Registering...")
+
+            R, G, B = randomColor()
+            username = self.username_textfield.text().replace('#', '') + '#'
+            password = self.password_textfield.text().replace('#', '') + '#'
+            online = "False#"
+            ip_address = "0.0.0.0:00000#"
+            avatar = "{0}.svg#".format(self.username_textfield.text())
+            status = "AVAILABLE#"
+            room = "GENERAL#"
+            color = toHex(R, G, B)
+            data = username + password + online + ip_address + avatar + status + room + color
+            self.client.send_msg(PROTOCOLS["register_user"], data)
+        else:
+            self.login_button.setEnabled(True)
+            self.login_result.setText(validation)
+            self.login_result.show()
+
+    def LoginForm(self):
+        self.login_button.setEnabled(True)
+
+        self.login_button.hide()
+        self.cancel_button.hide()
+        self.register_text_label.hide()
+        self.register_button.hide()
+
+        self.login_result.setGeometry(QtCore.QRect(50, 310, 260, 25))
+        self.login_button.setGeometry(QRect(73, 250, 111, 41))
+        self.cancel_button.setGeometry(QRect(190, 250, 111, 41))
+
+        self.login_button.setStyleSheet(LOGIN_BTN)
+        self.password_textfield.setEchoMode(QLineEdit.PasswordEchoOnEdit)
+
+        font = QFont()
+        font.setFamily("Comic Sans MS")
+        self.password_textfield.setFont(font)
+        self.password_register_textfield.setFont(font)
+        self.username_textfield.setText("Enter your username...")
+        self.password_textfield.setText("Password")
+        self.login_button.setText("Login")
+
+        self.login_button.clicked.disconnect()
+        self.login_button.clicked.connect(self.login)
+        self.cancel_button.clicked.disconnect()
+        self.cancel_button.clicked.connect(exit)
+
+        self.password_register_line.hide()
+        self.password_register_textfield.hide()
+        self.password_register_icon_label.hide()
+        self.login_button.show()
+        self.cancel_button.show()
+        self.register_text_label.show()
+        self.register_button.show()
+        self.login_result.show()
+
+    def formValidator(self):
+        if len(self.username_textfield.text()) > 12:
+            return "Username contains more than 12 characters."
+
+        if ' ' in self.username_textfield.text():
+            return "Username can not contain spaces."
+
+        if '#' in self.username_textfield.text():
+            return "Username can not contain (#) character."
+
+        if self.password_textfield.text() != self.password_register_textfield.text():
+            return "Passwords do not match."
+
+        if len(self.password_textfield.text()) > 12 or len(self.password_register_textfield.text()) > 12:
+            return "Password contains more than 12 characters."
+
+        if ' ' in self.password_textfield.text() or ' ' in self.password_register_textfield.text():
+            return "Password can not contain spaces."
+
+        if '#' in self.password_textfield.text() or '#' in self.password_register_textfield.text():
+            return "Password can not contain (#) character."
+
+        return "VALIDATED"
 
 
 def run(ClientTCP):
