@@ -60,7 +60,7 @@ class ChatRoomItem(object):
 class ChatRoomsModel(QAbstractItemModel):
     def __init__(self, nodes):
         QAbstractItemModel.__init__(self)
-        self.rooms_icons = {}
+        self._rooms_icons = {}
         self._root = ChatRoomItem(None)
         for node in nodes:
             self._root.addChild(node)
@@ -126,9 +126,15 @@ class ChatRoomsModel(QAbstractItemModel):
         if role == Qt.DecorationRole:
             # filter Decoration if the (node) is username, and accept only room names.
             try:
-                return self.rooms_icons[node.data(0)]
+                return self._rooms_icons[node.data(0)]
             except KeyError:
                 return None
+
+    def getRoomsIcons(self):
+        return self._rooms_icons
+
+    def setRoomsIcons(self, rooms_icons):
+        self._rooms_icons = rooms_icons
 
     def addRoom(self, node: ChatRoomItem) -> ChatRoomItem:
         """

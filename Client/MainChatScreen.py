@@ -3,12 +3,11 @@
 import threading
 from pathlib import Path
 
-import typing
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QRect, QRegExp, QSize, QTimer
 from PyQt5.QtGui import QIcon, QPixmap, QColor, QMovie, QKeyEvent
 from PyQt5.QtSvg import QSvgWidget
-from PyQt5.QtWidgets import QFrame, QMessageBox, QPushButton, QLabel
+from PyQt5.QtWidgets import QFrame, QMessageBox, QPushButton, QLabel, QTabWidget, QWidget
 from PyQt5.QtWidgets import QLineEdit, QCommandLinkButton, QComboBox, QTextEdit
 
 import LoadingScreen
@@ -35,20 +34,30 @@ LOGOUT_SOUND = str(Path(__file__).parent.resolve()) + "\\Sounds\\logout_sound.mp
 NEW_MESSAGE_SOUND = str(Path(__file__).parent.resolve()) + "\\Sounds\\new_message.mp3"
 LOADING_GIF = str(Path(__file__).parent.resolve()) + "\\Images\\loading.gif"
 
+# set code section to be loaded once.
+ALLOW_ONCE = {
+    "CHAT_ROOMS_NAMES": True,
+    "ONLINE_USERS_TIMER": True,
+    "MAIN_WINDOW_LOADED": False,
+    "REPLACE_USER_AVATAR": True,
+    "REQUIRE_RESTART": False,
+}
+
 
 class MainChatScreen(Observable):
     def __init__(self, ClientTCP):
         Observable.__init__(self)
         self.client = ClientTCP
         self.client.attach(self)
-        self.window_loaded = False
-        self.require_restart = False
         self.sound_enabled = True
         self.thread_worker = ThreadWorker()
         self.threads = {}
+        self.chat_tabs = {}
 
     def setupUi(self, MainChatWindow):
         self.main_window = MainChatWindow
+        ALLOW_ONCE["MAIN_WINDOW_LOADED"] = False
+
         MainChatWindow.setFixedSize(1574, 782)
         MainChatWindow.setObjectName("MainChatWindow")
         MainChatWindow.setWindowIcon(fetchWindowIcon())
@@ -67,13 +76,20 @@ class MainChatScreen(Observable):
         self.settings_frame.setFrameShadow(QFrame.Raised)
         self.settings_frame.setStyleSheet(COMMON_STYLESHEET)
 
-        self.main_chat = QtWidgets.QListView(self.centralwidget)
-        self.main_chat.setGeometry(QtCore.QRect(330, 60, 1001, 631))
-        self.main_chat.setObjectName("main_chat")
-        self.main_chat.setItemDelegate(MessageDelegate())
-        self.main_chat_model = MessagesModel()
-        self.main_chat.setModel(self.main_chat_model)
-        self.main_chat.verticalScrollBar().setStyleSheet(SCROLL_BAR_CSS)
+        last_seen_room = self.client.client_db_info["room"]
+        self.tabs_widget = QTabWidget(self.centralwidget)
+        self.tabs_widget.setObjectName(u"chat_tabs")
+        self.tabs_widget.setGeometry(QRect(330, 61, 1001, 630))
+        self.tabs_widget.tabBar().hide()
+        self.tabs_widget.addTab(QWidget(), last_seen_room)
+
+        self.chat_tabs[last_seen_room] = QtWidgets.QListView(self.tabs_widget.widget(0))
+        self.chat_tabs[last_seen_room].setGeometry(QtCore.QRect(0, 0, 995, 625))
+        self.chat_tabs[last_seen_room].setObjectName("{0}_tab".format(last_seen_room))
+        self.chat_tabs[last_seen_room].setItemDelegate(MessageDelegate())
+        self.chat_tabs[last_seen_room].setModel(MessagesModel())
+        self.chat_tabs[last_seen_room].verticalScrollBar().setStyleSheet(SCROLL_BAR_CSS)
+        self.chat_tabs[last_seen_room].setFrameShape(QFrame.NoFrame)
 
         self.users_list = QtWidgets.QListView(self.centralwidget)
         self.users_list.setGeometry(QtCore.QRect(1340, 95, 221, 647))
@@ -285,14 +301,12 @@ class MainChatScreen(Observable):
         QtCore.QMetaObject.connectSlotsByName(MainChatWindow)
 
         # Misc...
-        self.users_list_loaded = False
-        self.rooms_list_loaded = False
         self.initImages()
         self.initLists()
         self.initSettingsPanel()
         self.serverStatus()
 
-        self.window_loaded = True
+        ALLOW_ONCE["MAIN_WINDOW_LOADED"] = True
         self.main_window.show()
 
     def update(self, notif: typing.AnyStr, data: typing.AnyStr) -> None:
@@ -302,28 +316,27 @@ class MainChatScreen(Observable):
         :param data: message with data (String)
         :return: None
         """
+
         if notif == "ONLINE_USERS":
-            self.users_list_loaded = True
             self.threads["ONLINE_USERS"] = threading.Thread(target=self.updateUserList, args=(data,))
             self.threads["ONLINE_USERS"].start()
             self.loading_users_gif.stop()
             self.loading_users_label.hide()
+            ALLOW_ONCE["ONLINE_USERS_TIMER"] = False
 
         if notif == "MESSAGE_TO_CLIENT":
-            if self.window_loaded is True:
+            if ALLOW_ONCE["MAIN_WINDOW_LOADED"]:
                 self.threads["MESSAGE_TO_CLIENT"] = threading.Thread(target=self.updateChat, args=(data,))
                 self.threads["MESSAGE_TO_CLIENT"].start()
 
-                if self.sound_enabled:
-                    self.threads["SOUND_MESSAGE"] = threading.Thread(target=playsound, args=(NEW_MESSAGE_SOUND,))
-                    self.threads["SOUND_MESSAGE"].start()
-
         if notif == "CHAT_ROOMS_NAMES":
-            self.rooms_list_loaded = True
-            self.threads["CHAT_ROOMS_NAMES"] = threading.Thread(target=self.initRoomsList, args=(data,))
-            self.threads["CHAT_ROOMS_NAMES"].start()
-            self.loading_rooms_gif.stop()
-            self.loading_rooms_label.hide()
+            if ALLOW_ONCE["CHAT_ROOMS_NAMES"]:
+                ALLOW_ONCE["CHAT_ROOMS_NAMES"] = False
+
+                self.threads["CHAT_ROOMS_NAMES"] = threading.Thread(target=self.initRoomsList, args=(data,))
+                self.threads["CHAT_ROOMS_NAMES"].start()
+                self.loading_rooms_gif.stop()
+                self.loading_rooms_label.hide()
 
         if notif == "CHAT_ROOMS_INFO":
             self.threads["CHAT_ROOMS_INFO"] = threading.Thread(target=self.updateRoomsList, args=(data,))
@@ -347,25 +360,26 @@ class MainChatScreen(Observable):
 
         if notif == "REPLACE_USER_AVATAR":
             if data == "SUCCESS":
-                self.block_replaceUserAvatar = False
+                ALLOW_ONCE["REQUIRE_RESTART"] = True
+                ALLOW_ONCE["REPLACE_USER_AVATAR"] = False
                 username = self.client.client_db_info["username"]
                 self.settings_panel_avatar.setPixmap(fetchAvatar(username, "PIXMAP").scaled(150, 150))
                 self.replace_avatar.setEnabled(True)
-                self.require_restart = True
 
         if notif == "REPLACE_USERNAME_COLOR":
             if data == "SUCCESS":
                 self.replace_username_color.setEnabled(True)
-                self.require_restart = True
+                ALLOW_ONCE["REQUIRE_RESTART"] = True
 
         if notif == "REPLACE_USER_STATUS":
             if data == "SUCCESS":
                 self.replace_user_status.setEnabled(True)
-                self.require_restart = True
+                ALLOW_ONCE["REQUIRE_RESTART"] = True
 
         if notif == "SERVER_OFFLINE":
             self.main_window.setDisabled(True)
-            self.main_chat.setDisabled(True)
+            for tab in self.chat_tabs.values():
+                tab.setDisabled(True)
             self.server_offline_label.show()
 
     def updateChat(self, data: typing.AnyStr) -> None:
@@ -374,9 +388,16 @@ class MainChatScreen(Observable):
         :param data: decoded (String) data.
         :return: None
         """
-        username, text_direction, message = data.split('#')
-        model_index = self.main_chat_model.index(self.main_chat_model.rowCount(), 0)
-        self.main_chat_model.insertData(model_index, (username, [180, 20, 50], timeStamp(), text_direction, message))
+        username, text_direction, room, message = data.split('#')
+        model_index = self.chat_tabs[room].model().index(self.chat_tabs[room].model().rowCount(), 0)
+
+        # filter messages according to client's room
+        if self.client.client_db_info["room"] == room:
+            self.chat_tabs[room].model().insertData(model_index,(username, [180, 20, 50], timeStamp(), text_direction, message))
+
+            if self.sound_enabled:
+                self.threads["SOUND_MESSAGE"] = threading.Thread(target=playsound, args=(NEW_MESSAGE_SOUND,))
+                self.threads["SOUND_MESSAGE"].start()
 
     def sendMessage(self) -> None:
         """
@@ -388,8 +409,9 @@ class MainChatScreen(Observable):
             username = self.client.client_db_info["username"]
             text_direction = str(self.message_textfield.isLeftToRight())
             text_message = self.message_textfield.text().replace('#', '')
+            room = self.client.client_db_info["room"]
 
-            dispatch_data = username + '#' + text_direction + '#' + text_message
+            dispatch_data = username + '#' + text_direction + '#' + room + '#' + text_message
             self.client.send_msg(PROTOCOLS["client_message"], dispatch_data)
             self.message_textfield.setText("")
             self.send_button.setStyleSheet(DISABLED_BTN_CSS)
@@ -451,6 +473,9 @@ class MainChatScreen(Observable):
             elif online == 'False':
                 self.users_list_model.removeData(username)
 
+        # allow to refresh users list again from server.
+        ALLOW_ONCE["ONLINE_USERS"] = True
+
     def initRoomsList(self, data: typing.AnyStr) -> None:
         """
         Load chat rooms list, for each room (item) load the icon.
@@ -471,7 +496,7 @@ class MainChatScreen(Observable):
 
         # init model and send the data.
         self.chat_rooms_list_model = ChatRoomsModel(rooms_nodes)
-        self.chat_rooms_list_model.rooms_icons = rooms_icons
+        self.chat_rooms_list_model.setRoomsIcons(rooms_icons)
         self.chat_rooms_list.setModel(self.chat_rooms_list_model)
 
     def updateRoomsList(self, data: typing.AnyStr) -> None:
@@ -502,7 +527,29 @@ class MainChatScreen(Observable):
         username = self.client.client_db_info["username"]
         if self.chat_rooms_list_model.findRoom(clicked_room) is not None:
             self.current_user_chat_room.setText('# ' + clicked_room)
+            self.client.client_db_info["room"] = clicked_room
             self.client.send_msg(PROTOCOLS["change_user_room"], clicked_room + '#' + username)
+
+            # check if tab is already exist
+            tab_names = [value for value in self.chat_tabs.keys()]
+
+            if clicked_room not in tab_names:
+                # create new chat tab
+                current_tab = QWidget()
+                self.tabs_widget.addTab(current_tab, clicked_room)
+
+                # initialize chat model and attach it to the current tab
+                self.chat_tabs[clicked_room] = QtWidgets.QListView(current_tab)
+                self.chat_tabs[clicked_room].setGeometry(QtCore.QRect(0, 0, 995, 625))
+                self.chat_tabs[clicked_room].setFrameShape(QFrame.NoFrame)
+                self.chat_tabs[clicked_room].setObjectName("{0}".format(clicked_room))
+                self.chat_tabs[clicked_room].setItemDelegate(MessageDelegate())
+                self.chat_tabs[clicked_room].setModel(MessagesModel())
+                self.chat_tabs[clicked_room].verticalScrollBar().setStyleSheet(SCROLL_BAR_CSS)
+
+            # move to the clicked room tab.
+            current_tab_widget = self.chat_tabs[clicked_room].parentWidget()
+            self.tabs_widget.setCurrentWidget(current_tab_widget)
 
     def soundButtonStatus(self) -> None:
         """
@@ -537,7 +584,7 @@ class MainChatScreen(Observable):
             self.initSettingsPanel()
             self.settings_panel.show()
         else:
-            if self.require_restart:
+            if ALLOW_ONCE["REQUIRE_RESTART"]:
                 msgBox = QMessageBox()
                 msgBox.setIcon(QMessageBox.Information)
                 msgBox.setText("Restart to apply changes.")
@@ -546,6 +593,10 @@ class MainChatScreen(Observable):
                     Qt.WindowTitleHint | Qt.Dialog | Qt.WindowMaximizeButtonHint | Qt.CustomizeWindowHint)
                 msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
                 if msgBox.exec_() == QMessageBox.Ok:
+                    ALLOW_ONCE["CHAT_ROOMS_NAMES"] = True
+                    ALLOW_ONCE["ONLINE_USERS_TIMER"] = True
+                    ALLOW_ONCE["MAIN_WINDOW_LOADED"] = False
+
                     # terminate client socket, close it, and restart the process of MainChatWindow Gui.
                     self.client.isTerminated = True
                     self.client.client_socket.close()
@@ -573,7 +624,7 @@ class MainChatScreen(Observable):
         username, password = self.client.client_db_info["username"], self.client.client_db_info["password"]
         self.client.send_msg(PROTOCOLS["refresh_client_info"], username + "#" + password)
 
-        self.block_replaceUserAvatar = False
+        ALLOW_ONCE["REPLACE_USER_AVATAR"] = False
         x_loc = self.settings_panel.width() / 2
         username = self.client.client_db_info["username"]
         self.settings_panel_avatar.setGeometry(x_loc - 75, 50, 150, 150)
@@ -654,10 +705,10 @@ class MainChatScreen(Observable):
         Replace user Avatar on user demand.
         :return: None
         """
-        if self.block_replaceUserAvatar is False:
+        if not ALLOW_ONCE["REPLACE_USER_AVATAR"]:
             self.client.send_msg(PROTOCOLS["replace_user_avatar"], self.client.client_db_info["username"])
             self.replace_avatar.setDisabled(True)
-            self.block_replaceUserAvatar = True
+            ALLOW_ONCE["REPLACE_USER_AVATAR"] = True
 
     def replaceUserStatus(self) -> None:
         """
@@ -674,6 +725,10 @@ class MainChatScreen(Observable):
         Logout from the chat, and return to login screen.
         :return: None
         """
+        ALLOW_ONCE["CHAT_ROOMS_NAMES"] = True
+        ALLOW_ONCE["ONLINE_USERS_TIMER"] = True
+        ALLOW_ONCE["MAIN_WINDOW_LOADED"] = False
+
         self.client.isTerminated = True
         self.client.client_socket.close()
         self.main_window.close()
@@ -692,13 +747,13 @@ class MainChatScreen(Observable):
         Initialize for the first time the Online Users List and Chat Rooms List.
         :return: None
         """
-        if self.users_list_loaded is False:
+        if ALLOW_ONCE["ONLINE_USERS_TIMER"]:
             self.client.send_msg(PROTOCOLS["online_users"], "")
             QTimer.singleShot(2000, lambda: self.initLists())
 
-        if self.rooms_list_loaded is False:
+        if ALLOW_ONCE["CHAT_ROOMS_NAMES"]:
             self.client.send_msg(PROTOCOLS["chat_rooms_names"], "")
-            QTimer.singleShot(2000, lambda: self.initLists())
+            QTimer.singleShot(50000, lambda: self.initLists())
 
     def initImages(self) -> None:
         """
