@@ -1,3 +1,5 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 import typing
 from PyQt5.QtCore import QAbstractListModel, QModelIndex, Qt, pyqtSignal
 # noinspection PyUnresolvedReferences
@@ -32,3 +34,5 @@ class MessagesModel(QAbstractListModel):
         if value[0]:
             self.messages_data.append((value[0], value[1], value[2], value[3], value[4]))
         self.endInsertRows()
+
+# © 2021 Liran Smadja. All rights reserved.

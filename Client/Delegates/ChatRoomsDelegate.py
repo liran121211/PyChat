@@ -1,3 +1,5 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 from PyQt5.QtCore import QMargins, Qt, QRectF, QSize
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtWidgets import QStyledItemDelegate, QApplication, QStyle
@@ -24,6 +26,7 @@ class ChatRoomsDelegate(QStyledItemDelegate):
         painter.setPen(Qt.black)
         room_rect = QRectF(option.rect.x() + 33, option.rect.y() + 8, option.rect.width(), option.rect.height())
         painter.setFont(createFont("Eras Medium ITC", 14, False, 50))
+
         if current_data not in rooms_list:
             painter.drawText(room_rect, Qt.TextWordWrap, '@' + str(current_data))
         else:
@@ -41,3 +44,5 @@ class ChatRoomsDelegate(QStyledItemDelegate):
         rect = metrics.boundingRect(rect, Qt.TextWordWrap, "Chamber Of Secrets")
         rect = rect.marginsAdded(self.default_margins)  # Re add padding for item size.
         return rect.size()
+
+# © 2021 Liran Smadja. All rights reserved.

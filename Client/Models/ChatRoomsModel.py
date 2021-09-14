@@ -1,3 +1,5 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 import sys
 import typing
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
@@ -199,3 +201,5 @@ class ChatRoomsModel(QAbstractItemModel):
             self.beginRemoveRows(QModelIndex(), user_index, user_index)
             user_node.parent().removeChild(user_node)
             self.endRemoveRows()
+
+# © 2021 Liran Smadja. All rights reserved.

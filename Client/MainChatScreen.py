@@ -1,3 +1,5 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 import threading
 from pathlib import Path
 
@@ -186,7 +188,7 @@ class MainChatScreen(Observable):
 
         self.settings_panel = QFrame(self.centralwidget)
         self.settings_panel.setGeometry(
-            QRect((self.main_window.width() / 2) - 200, (self.main_window.height() / 2) - 200, 400, 400))
+            QRect((self.main_window.width() / 2) - 200, (self.main_window.height() / 2) - 200, 400, 415))
         self.settings_panel.setObjectName("settings_panel")
         self.settings_panel.setFrameShape(QFrame.Box)
         self.settings_panel.setFrameShadow(QFrame.Raised)
@@ -203,6 +205,9 @@ class MainChatScreen(Observable):
 
         self.replace_username_color = QCommandLinkButton(self.settings_panel)
         self.replace_username_color.setObjectName("replace_username_color")
+
+        self.logout_button = QCommandLinkButton(self.settings_panel)
+        self.logout_button.setObjectName("logout_button")
 
         self.server_offline_label = QLabel(self.centralwidget)
         self.server_offline_label.setGeometry(QRect(540, 280, 581, 91))
@@ -493,11 +498,11 @@ class MainChatScreen(Observable):
         :param index: current clicked node (ChatRoomItem) object.
         :return: None
         """
-        clicked_item = index.data(0)[0]
+        clicked_room = index.data(0)[0]
         username = self.client.client_db_info["username"]
-        if self.chat_rooms_list_model.findRoom(clicked_item) is not None:
-            self.current_user_chat_room.setText('# ' + clicked_item)
-            self.client.send_msg(PROTOCOLS["change_user_room"], clicked_item + '#' + username)
+        if self.chat_rooms_list_model.findRoom(clicked_room) is not None:
+            self.current_user_chat_room.setText('# ' + clicked_room)
+            self.client.send_msg(PROTOCOLS["change_user_room"], clicked_room + '#' + username)
 
     def soundButtonStatus(self) -> None:
         """
@@ -582,7 +587,7 @@ class MainChatScreen(Observable):
 
         avatar_icon = QIcon()
         avatar_icon.addFile(":/replace_avatar/replace_avatar.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.replace_avatar.setGeometry(QRect(15, 270, 250, 51))
+        self.replace_avatar.setGeometry(QRect(15, 275, 250, 51))
         self.replace_avatar.setIcon(avatar_icon)
         self.replace_avatar.setIconSize(QSize(32, 32))
         self.replace_avatar.setText("Replace Current Avatar")
@@ -592,13 +597,23 @@ class MainChatScreen(Observable):
 
         username_icon = QIcon()
         username_icon.addFile(":/change_username_color/change_username_color.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.replace_username_color.setGeometry(QRect(15, 310, 250, 51))
+        self.replace_username_color.setGeometry(QRect(15, 315, 250, 51))
         self.replace_username_color.setIcon(username_icon)
         self.replace_username_color.setIconSize(QSize(32, 32))
         self.replace_username_color.setText("Replace Username Color")
         self.replace_username_color.setFont(createFont("Eras Medium ITC", 13, True, 50))
         self.replace_username_color.clicked.connect(self.replaceUserColor)
         self.replace_username_color.setStyleSheet(REPLACE_USERNAME_CSS)
+
+        logout_icon = QIcon()
+        logout_icon.addFile(":/logout/logout.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.logout_button.setGeometry(QRect(15, 355, 250, 51))
+        self.logout_button.setIcon(logout_icon)
+        self.logout_button.setIconSize(QSize(32, 32))
+        self.logout_button.setText("Logout")
+        self.logout_button.setFont(createFont("Eras Medium ITC", 13, True, 50))
+        self.logout_button.clicked.connect(self.logout)
+        self.logout_button.setStyleSheet(LOGOUT_CSS)
 
         self.replace_user_status.setGeometry(x_loc - 75, 240, 158, 30)
         self.replace_user_status.setFont(createFont("Eras Medium ITC", 13, True, 50))
@@ -654,6 +669,16 @@ class MainChatScreen(Observable):
         username = self.client.client_db_info["username"]
         self.client.send_msg(PROTOCOLS["replace_user_status"], status + '#' + username)
 
+    def logout(self) -> None:
+        """
+        Logout from the chat, and return to login screen.
+        :return: None
+        """
+        self.client.isTerminated = True
+        self.client.client_socket.close()
+        self.main_window.close()
+        LoadingScreen.restart()
+
     def serverStatus(self) -> None:
         """
         Retrieve server status: Online/Offline, by sending message and waiting for reply.
@@ -700,3 +725,5 @@ def run(ClientTCP: Client.ClientTCP) -> None:
     window = QtWidgets.QMainWindow()
     MCS = MainChatScreen(ClientTCP=ClientTCP)
     MCS.setupUi(window)
+
+# © 2021 Liran Smadja. All rights reserved.

@@ -1,3 +1,5 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 import os
 import random
 import sys
@@ -121,9 +123,13 @@ def fetchSound() -> None:
     :return: None
     """
     try:
-        urlretrieve('{0}/sounds/login_sound.mp3'.format(SERVER_URL), 'sounds/login_sound.mp3')
-        urlretrieve('{0}/sounds/logout_sound.mp3'.format(SERVER_URL), 'sounds/logout_sound.mp3')
-        urlretrieve('{0}/sounds/new_message.mp3'.format(SERVER_URL), 'sounds/new_message.mp3')
+        if not os.path.isfile('sounds/login_sound.mp3'):
+            urlretrieve('{0}/sounds/login_sound.mp3'.format(SERVER_URL), 'sounds/login_sound.mp3')
+        if not os.path.isfile('sounds/logout_sound.mp3'):
+            urlretrieve('{0}/sounds/logout_sound.mp3'.format(SERVER_URL), 'sounds/logout_sound.mp3')
+        if not os.path.isfile('sounds/new_message.mp3'):
+            urlretrieve('{0}/sounds/new_message.mp3'.format(SERVER_URL), 'sounds/new_message.mp3')
+
     except PermissionError:
         fetchSound()
     except FileNotFoundError:
@@ -157,7 +163,8 @@ def fetchImages() -> None:
     :return: None
     """
     try:
-        urlretrieve('{0}/misc/loading_data_.gif'.format(SERVER_URL), 'sounds/loading.gif')
+        if not os.path.isfile('Images/loading.gif'):
+            urlretrieve('{0}/misc/loading_data_.gif'.format(SERVER_URL), 'Images/loading.gif')
     except PermissionError:
         fetchImages()
     except FileNotFoundError:
@@ -178,3 +185,5 @@ def catchErrors(exctype, value, traceback) -> None:
     # Call the normal Exception hook after
     sys._excepthook(exctype, value, traceback)
     sys.exit(1)
+
+# © 2021 Liran Smadja. All rights reserved.

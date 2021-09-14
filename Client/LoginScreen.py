@@ -1,3 +1,6 @@
+# © 2021 Liran Smadja. All rights reserved.
+
+import sys
 import typing
 
 from PyQt5.QtWidgets import QFrame, QLabel, QLineEdit, QPushButton
@@ -112,7 +115,7 @@ class LoginScreen(Observable):
         self.cancel_button.setGeometry(QRect(190, 250, 111, 41))
         self.cancel_button.setStyleSheet(CANCEL_BTN)
         self.cancel_button.setObjectName("cancel_button")
-        self.cancel_button.clicked.connect(exit)
+        self.cancel_button.clicked.connect(lambda: sys.exit(1))
 
         self.register_button = QPushButton(self.background_frame)
         self.register_button.setGeometry(QtCore.QRect(228, 210, 71, 21))
@@ -276,7 +279,7 @@ class LoginScreen(Observable):
             self.login_button.click()
 
         if event.key() == Qt.Key_Escape:
-            exit(0)
+            sys.exit(1)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """
@@ -457,7 +460,7 @@ class LoginScreen(Observable):
         self.login_button.clicked.disconnect()
         self.login_button.clicked.connect(self.login)
         self.cancel_button.clicked.disconnect()
-        self.cancel_button.clicked.connect(exit)
+        self.cancel_button.clicked.connect(lambda: sys.exit(1))
 
         self.password_register_line.hide()
         self.password_register_textfield.hide()
@@ -466,7 +469,7 @@ class LoginScreen(Observable):
         self.cancel_button.show()
         self.register_text_label.show()
         self.register_button.show()
-        self.login_result.show()
+
 
     def formValidator(self) -> typing.AnyStr:
         """
@@ -507,3 +510,5 @@ def run(ClientTCP: Client.ClientTCP) -> None:
     next_screen = LoginScreen(ClientTCP=ClientTCP)
     next_screen.setupUi(window)
     window.show()
+
+# © 2021 Liran Smadja. All rights reserved.

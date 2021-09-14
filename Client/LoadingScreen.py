@@ -1,3 +1,5 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 from PyQt5.QtWidgets import QLabel, QWidget, QProgressBar, QMenuBar, QStatusBar, QApplication, QMainWindow
 from PyQt5.QtCore import Qt
 
@@ -162,3 +164,5 @@ def restart() -> None:
     next_window = LoadingScreen()
     next_window.setupUi(window)
     window.show()
+
+# © 2021 Liran Smadja. All rights reserved.

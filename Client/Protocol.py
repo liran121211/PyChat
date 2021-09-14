@@ -1,4 +1,7 @@
-# Protocol Constants
+# © 2021 Liran Smadja. All rights reserved.
+
+import typing
+
 CMD_FIELD_LENGTH = 16  # Exact length of command field (in bytes)
 LENGTH_FIELD_LENGTH = 4  # Exact length of length field (in bytes)
 MAX_DATA_LENGTH = 10 ** LENGTH_FIELD_LENGTH - 1  # Max size of data field according to protocol
@@ -33,17 +36,18 @@ PROTOCOLS = {
     "is_server_running": "IS_SERVER_RUNNING",
     "register_user": "REGISTER_USER"
 
-}  # .. Add more commands if needed
-
-# Other constants
-
-ERROR_RETURN = None  # What is returned in case of an error
+}
 
 
-def build_message(cmd, data):
+def build_message(cmd: typing.AnyStr, data: typing.AnyStr) -> typing.AnyStr:
     """
-    Gets command name (str) and data field (str) and creates a valid protocol message
-    Returns: str, or None if error occurred
+    Gets command name (String) and data field (String) and creates a valid protocol message
+    :param cmd: (String) PROTOCOLS key.
+    :param data: (String) message.
+    :return: (String), or None if error occurred
+    """
+    """
+
     """
     full_msg = None
     for item in PROTOCOLS.values():
@@ -56,10 +60,11 @@ def build_message(cmd, data):
     return full_msg
 
 
-def parse_message(data):
+def parse_message(data: typing.AnyStr) -> tuple:
     """
     Parses protocol message and returns command name and data field
-    Returns: cmd (str), data (str). If some error occurred, returns None, None
+    :param data: (String) message.
+    :return: cmd (String), data (String). If some error occurred, returns None, None
     """
     split_by_delimiter = data.split(DELIMITER)
     cmd = split_by_delimiter[0]
@@ -87,11 +92,13 @@ def parse_message(data):
     return cmd, msg
 
 
-def split_data(msg, expected_fields):
+def split_data(msg: typing.AnyStr, expected_fields: int) -> list:
     """
     Helper method. gets a string and number of expected fields in it. Splits the string
     using protocol's data field delimiter (|#) and validates that there are correct number of fields.
-    Returns: list of fields if all ok. If some error occurred, returns None
+    :param msg: (String) message.
+    :param expected_fields: (int) times the fields in the message.
+    :return: list of fields if all ok. If some error occurred, returns None
     """
     count_delimiters = 0
     for delimiter in msg:
@@ -105,7 +112,8 @@ def split_data(msg, expected_fields):
 def join_data(msg_fields):
     """
     Helper method. Gets a list, joins all of it's fields to one string divided by the data delimiter.
-    Returns: string that looks like cell1#cell2#cell3
+    :param msg_fields: (int) times the fields in the message.
+    :return: string that looks like cell1#cell2#cell3
     """
     msg = ""
     for word in msg_fields:
@@ -115,6 +123,12 @@ def join_data(msg_fields):
 
 
 def debugMessages(key: str, print_msg: bool = False) -> str:
+    """
+    Get debug details according to the key given.
+    :param key: dict key
+    :param print_msg: debug info.
+    :return: debug (dict value) if True, otherwise None.
+    """
     msg_dict = {
         "START_SERVER": "Initializing server...",
         "SERVER_STARTED": "Server is up and running.",
@@ -139,3 +153,5 @@ def debugMessages(key: str, print_msg: bool = False) -> str:
         print(msg_dict[key])
 
     return msg_dict[key]
+
+# © 2021 Liran Smadja. All rights reserved.

@@ -1,3 +1,5 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 from PyQt5.QtCore import QMargins, Qt, QRectF, QSize
 from PyQt5.QtGui import QBrush, QColor, QPen
 from PyQt5.QtWidgets import QStyledItemDelegate, QStyle, QApplication
@@ -69,3 +71,5 @@ class OnlineUsersDelegate(QStyledItemDelegate):
         rect = metrics.boundingRect(rect, Qt.TextWordWrap, about_message)
         rect = rect.marginsAdded(self.default_margins)  # Re add padding for item size.
         return rect.size()
+
+# © 2021 Liran Smadja. All rights reserved.

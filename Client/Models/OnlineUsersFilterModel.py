@@ -1,3 +1,5 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 import typing
 from PyQt5.QtCore import QSortFilterProxyModel, QModelIndex
 
@@ -12,3 +14,5 @@ class OnlineUsersFilterModel(QSortFilterProxyModel):
 
     def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
         return self.sourceModel().data(self.mapToSource(index), role)
+
+# © 2021 Liran Smadja. All rights reserved.

@@ -1,6 +1,9 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 import socket
 import threading
 import time
+import typing
 
 from Observable import Observable
 from Protocol import *
@@ -17,9 +20,9 @@ class ClientTCP(Observable):
         self.db_waiting_response = True
         self.isTerminated = False
 
-    def setup(self):
+    def setup(self) -> None:
         """
-        Initialize Client GUI.
+        Initialize Client TCP socket protocol.
         Initialize connection to server.
         :return: None, otherwise raise an error.
         """
@@ -43,7 +46,7 @@ class ClientTCP(Observable):
         except ConnectionError:
             self.notify("TIMEOUT")
 
-    def recv_msg(self):
+    def recv_msg(self) -> None:
         """
         Receive messages from server.
         Runs infinitely thorough seperated Thread.
@@ -59,7 +62,7 @@ class ClientTCP(Observable):
             except ConnectionResetError:
                 self.notify(PROTOCOLS["server_offline"], "")
 
-    def send_msg(self, cmd, msg):
+    def send_msg(self, cmd: typing.AnyStr, msg: typing.AnyStr) -> None:
         """
         Send message to server.
         :param cmd: Identify by protocol with (command)
@@ -69,10 +72,10 @@ class ClientTCP(Observable):
         if not self.isTerminated:
             self.client_socket.send(build_message(cmd, msg).encode())
 
-    def serverTransmission(self, client_socket, message):
+    def serverTransmission(self, client_socket: socket, message: typing.AnyStr)->None:
         """
         Receive message from server that contains (command) to follow.
-        :param client_socket: Client socket obj.
+        :param client_socket: Client (socket) obj.
         :param message: String message.
         :return: None.
         """
@@ -100,11 +103,9 @@ class ClientTCP(Observable):
 
         if cmd == "LOGIN_OK":
             self.notify("LOGIN_OK")
-            debugMessages("AUTHENTICATED")
 
         if cmd == "LOGIN_ERROR":
             self.notify("LOGIN_ERROR")
-            debugMessages("NOT_AUTHENTICATED")
 
         if cmd == "ONLINE_USERS":
             self.notify("ONLINE_USERS", msg)
@@ -133,12 +134,15 @@ class ClientTCP(Observable):
         if cmd == "REPLACE_USER_STATUS":
             self.notify("REPLACE_USER_STATUS", msg)
 
+        if cmd == "REGISTER_USER":
+            self.notify("REGISTER_USER", msg)
+
         if cmd == "IS_SERVER_RUNNING":
             pass
 
-        if cmd == "REGISTER_USER":
-            self.notify("REGISTER_USER", msg)
 
 if __name__ == "__main__":
     client = ClientTCP()
     client.setup()
+
+# © 2021 Liran Smadja. All rights reserved.

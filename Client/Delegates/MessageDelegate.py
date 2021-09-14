@@ -1,3 +1,5 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 from PyQt5.QtCore import QMargins, QRectF, Qt, QSize
 from PyQt5.QtGui import QColor, QBrush
 from PyQt5.QtWidgets import QStyledItemDelegate, QApplication
@@ -76,3 +78,5 @@ class MessageDelegate(QStyledItemDelegate):
         rect = metrics.boundingRect(rect, Qt.TextWordWrap, text_message)
         rect = rect.marginsAdded(self.default_margins)
         return rect.size()
+
+# © 2021 Liran Smadja. All rights reserved.

@@ -1,4 +1,5 @@
-# Protocol Constants
+# © 2021 Liran Smadja. All rights reserved.
+
 CMD_FIELD_LENGTH = 16  # Exact length of command field (in bytes)
 LENGTH_FIELD_LENGTH = 4  # Exact length of length field (in bytes)
 MAX_DATA_LENGTH = 10 ** LENGTH_FIELD_LENGTH - 1  # Max size of data field according to protocol
@@ -139,3 +140,5 @@ def debugMessages(key: str, print_msg: bool = False) -> str:
         print(msg_dict[key])
 
     return msg_dict[key]
+
+# © 2021 Liran Smadja. All rights reserved.

@@ -1,7 +1,8 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 import socket
 import select
 import time
-import typing
 import random
 
 import DBConnection as DBConn
@@ -279,9 +280,9 @@ def replaceAvatar(current_socket, username, k=0) -> None:
 
     if IMAGE_LIMIT_REACHED in svg_data.decode():
         try:
-            svg_data = fetchAvatar(username, None, k + 1)
+            replaceAvatar(username, None, k + 1)
         except IndexError:
-            svg_data = fetchAvatar(username, None, 0)
+            replaceAvatar(username, None, 0)
 
     open('../var/www/html/avatars/{0}.svg'.format(username), 'wb').write(svg_data)
     dispatch = build_message(PROTOCOLS["replace_user_avatar"], "SUCCESS")
@@ -300,3 +301,5 @@ while True:
         print(error)
         SERVER_STARTED = False
         time.sleep(5)
+
+# © 2021 Liran Smadja. All rights reserved.

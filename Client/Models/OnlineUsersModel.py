@@ -1,3 +1,5 @@
+# © 2021 Liran Smadja. All rights reserved.
+
 import typing
 from PyQt5.QtCore import QAbstractListModel, QModelIndex, Qt, pyqtSignal
 
@@ -35,3 +37,5 @@ class OnlineUsersModel(QAbstractListModel):
                 self.users_data.pop(row)
                 self.endRemoveRows()
                 break
+
+# © 2021 Liran Smadja. All rights reserved.

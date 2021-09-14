@@ -1,8 +1,8 @@
-import time
+# © 2021 Liran Smadja. All rights reserved.
+
 
 import psycopg2
 from Protocol import *
-import threading
 
 DATABASE_ADDRESS = "HIDDEN"
 DATABASE_NAME = "HIDDEN"
@@ -12,7 +12,7 @@ DATABASE_PASSWORD = "HIDDEN"
 DATABASE_PORT = "HIDDEN"
 
 
-class DBConnection():
+class DBConnection:
     def __init__(self):
         self.conn = None
         self.cursor = None
@@ -169,3 +169,5 @@ class DBConnection():
         """
         self.cursor.close()
         self.conn.close()
+
+# © 2021 Liran Smadja. All rights reserved.
