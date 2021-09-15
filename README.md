@@ -97,7 +97,9 @@ Python Interpreter 3.7 and above
 ### Installation
 
 1. The application can be run through Python interpreter or executable file.
+	
 	[Python Version](https://github.com/liran121211/PyChat/archive/refs/heads/master.zip)
+	
 	[EXE Version](http://167.172.181.78/PyChat.zip)
 
 
