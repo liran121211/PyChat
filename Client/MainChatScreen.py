@@ -41,6 +41,7 @@ ALLOW_ONCE = {
     "MAIN_WINDOW_LOADED": False,
     "REPLACE_USER_AVATAR": True,
     "REQUIRE_RESTART": False,
+    "LOGOUT": True,
 }
 
 
@@ -393,7 +394,8 @@ class MainChatScreen(Observable):
 
         # filter messages according to client's room
         if self.client.client_db_info["room"] == room:
-            self.chat_tabs[room].model().insertData(model_index,(username, [180, 20, 50], timeStamp(), text_direction, message))
+            self.chat_tabs[room].model().insertData(model_index,
+                                                    (username, [180, 20, 50], timeStamp(), text_direction, message))
 
             if self.sound_enabled:
                 self.threads["SOUND_MESSAGE"] = threading.Thread(target=playsound, args=(NEW_MESSAGE_SOUND,))
@@ -593,10 +595,6 @@ class MainChatScreen(Observable):
                     Qt.WindowTitleHint | Qt.Dialog | Qt.WindowMaximizeButtonHint | Qt.CustomizeWindowHint)
                 msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
                 if msgBox.exec_() == QMessageBox.Ok:
-                    ALLOW_ONCE["CHAT_ROOMS_NAMES"] = True
-                    ALLOW_ONCE["ONLINE_USERS_TIMER"] = True
-                    ALLOW_ONCE["MAIN_WINDOW_LOADED"] = False
-
                     # terminate client socket, close it, and restart the process of MainChatWindow Gui.
                     self.client.isTerminated = True
                     self.client.client_socket.close()
@@ -725,14 +723,12 @@ class MainChatScreen(Observable):
         Logout from the chat, and return to login screen.
         :return: None
         """
-        ALLOW_ONCE["CHAT_ROOMS_NAMES"] = True
-        ALLOW_ONCE["ONLINE_USERS_TIMER"] = True
-        ALLOW_ONCE["MAIN_WINDOW_LOADED"] = False
-
-        self.client.isTerminated = True
-        self.client.client_socket.close()
-        self.main_window.close()
-        LoadingScreen.restart()
+        if ALLOW_ONCE["LOGOUT"]:
+            ALLOW_ONCE["LOGOUT"] = False
+            self.client.isTerminated = True
+            self.client.client_socket.close()
+            self.main_window.close()
+            LoadingScreen.restart()
 
     def serverStatus(self) -> None:
         """
@@ -777,6 +773,13 @@ def run(ClientTCP: Client.ClientTCP) -> None:
     :param ClientTCP: Client module.
     :return: None
     """
+    ALLOW_ONCE["CHAT_ROOMS_NAMES"] = True
+    ALLOW_ONCE["ONLINE_USERS_TIMER"] = True
+    ALLOW_ONCE["MAIN_WINDOW_LOADED"] = False
+    ALLOW_ONCE["REPLACE_USER_AVATAR"] = True
+    ALLOW_ONCE["REQUIRE_RESTART"] = False
+    ALLOW_ONCE["LOGOUT"] = True
+
     window = QtWidgets.QMainWindow()
     MCS = MainChatScreen(ClientTCP=ClientTCP)
     MCS.setupUi(window)
