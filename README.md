@@ -81,19 +81,19 @@ According to the application, the below plugins must be installed, whether throu
 Python Interpreter 3.7 and above
 [Python 3.7.0](https://www.python.org/downloads/release/python-370/)
  
-	PyQT5
+PyQT5
   
   ```pip install PyQt5==5.15.4```
   
-	Requests
+Requests
   
   ```pip install requests==2.26.0```
 
-	PlaySound2
+PlaySound2
   
   ```pip install playsound2==0.1```
 
-	Crypto.Chiper
+Crypto.Chiper
   
   ```pip install pycryptodome```
 	 
