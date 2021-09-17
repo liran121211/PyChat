@@ -1,5 +1,4 @@
-# © 2021 Liran Smadja. All rights reserved.
-
+# Protocol Constants
 import typing
 
 CMD_FIELD_LENGTH = 16  # Exact length of command field (in bytes)
@@ -34,7 +33,7 @@ PROTOCOLS = {
     "refresh_client_info": "REFRESH_CLIENT_INFO",
     "server_offline": "SERVER_OFFLINE",
     "is_server_running": "IS_SERVER_RUNNING",
-    "register_user": "REGISTER_USER"
+    "register_user": "REGISTER_USER",
 
 }
 
@@ -153,5 +152,3 @@ def debugMessages(key: str, print_msg: bool = False) -> str:
         print(msg_dict[key])
 
     return msg_dict[key]
-
-# © 2021 Liran Smadja. All rights reserved.

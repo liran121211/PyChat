@@ -1,12 +1,31 @@
 # © 2021 Liran Smadja. All rights reserved.
 
+import time
 import socket
 import threading
-import time
-import typing
 
 from Observable import Observable
+from Crypto.Cipher import AES
 from Protocol import *
+
+# encryption key
+SECRET_KEY = b'\x94}a\x1c:L\xa3\xc7\xe1\x86\xd2Oh\x88\x0f3'
+IV = b'%\xf0\x01@Q\x8a\xca\xfd\xeb\xdd\xc9\x0b5\x17\xc6D'
+
+
+def encryptTransmission(msg):
+    missing_len = 16 - (len(msg) % 16)
+    msg += '&' * missing_len
+    encryptor = AES.new(SECRET_KEY, AES.MODE_CBC, IV)
+    return encryptor.encrypt(msg.encode())
+
+
+def decryptTransmission(msg):
+    decrypter = AES.new(SECRET_KEY, AES.MODE_CBC, IV)
+    decrypted_message = decrypter.decrypt(msg)
+    decoded_message = decrypted_message.decode()
+    justify_message = decoded_message.replace('&', '')
+    return justify_message
 
 
 class ClientTCP(Observable):
@@ -16,9 +35,9 @@ class ClientTCP(Observable):
         self.server_port = 5678
         self.max_msg_length = 2048
         self.client_socket = None
-        self.client_db_info = {}
         self.db_waiting_response = True
         self.isTerminated = False
+        self.client_db_info = {}
 
     def setup(self) -> None:
         """
@@ -69,10 +88,11 @@ class ClientTCP(Observable):
         :param msg: String that contains the message.
         :return: None
         """
+        # if client socket is not closed
         if not self.isTerminated:
             self.client_socket.send(build_message(cmd, msg).encode())
 
-    def serverTransmission(self, client_socket: socket, message: typing.AnyStr)->None:
+    def serverTransmission(self, client_socket: socket, message) -> None:
         """
         Receive message from server that contains (command) to follow.
         :param client_socket: Client (socket) obj.

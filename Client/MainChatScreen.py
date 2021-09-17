@@ -392,14 +392,11 @@ class MainChatScreen(Observable):
         username, text_direction, room, message = data.split('#')
         model_index = self.chat_tabs[room].model().index(self.chat_tabs[room].model().rowCount(), 0)
 
-        # filter messages according to client's room
-        if self.client.client_db_info["room"] == room:
-            self.chat_tabs[room].model().insertData(model_index,
-                                                    (username, [180, 20, 50], timeStamp(), text_direction, message))
+        self.chat_tabs[room].model().insertData(model_index,(username, [180, 20, 50], timeStamp(), text_direction, message))
 
-            if self.sound_enabled:
-                self.threads["SOUND_MESSAGE"] = threading.Thread(target=playsound, args=(NEW_MESSAGE_SOUND,))
-                self.threads["SOUND_MESSAGE"].start()
+        if self.sound_enabled:
+            self.threads["SOUND_MESSAGE"] = threading.Thread(target=playsound, args=(NEW_MESSAGE_SOUND,))
+            self.threads["SOUND_MESSAGE"].start()
 
     def sendMessage(self) -> None:
         """

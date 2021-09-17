@@ -323,9 +323,6 @@ class LoginScreen(Observable):
             self.login_result.hide()
 
         if notif == "LOGIN_OK":
-            # notification to BOT
-            self.client.send_msg(PROTOCOLS["bot_user_logged_in"], self.username_textfield.text())
-
             # Send beacon to load the MainChatScreen
             self.thread_worker.finished.emit(100)
 
@@ -356,6 +353,10 @@ class LoginScreen(Observable):
         Detach Client TCP object from the current GUI.
         :return: None
         """
+
+        # notification to BOT
+        self.client.send_msg(PROTOCOLS["bot_user_logged_in"], self.username_textfield.text())
+
         self.thread_worker.terminate()
         self.main_window.close()
         self.client.detach(self)
