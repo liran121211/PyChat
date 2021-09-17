@@ -77,7 +77,7 @@ class ClientTCP(Observable):
         """
         # if client socket is not closed
         if not self.isTerminated:
-            self.encryptTransmission(build_message(cmd, msg))
+            encryptTransmission(self.client_socket, build_message(cmd, msg))
 
     def serverTransmission(self, client_socket: socket, message) -> None:
         """
@@ -148,23 +148,23 @@ class ClientTCP(Observable):
             pass
 
 
-def encryptTransmission(msg: typing.AnyStr) -> None:
+def encryptTransmission(client_socket: socket, msg: typing.AnyStr) -> None:
     """
     Encrypt data and send it to server.
+    :param client_socket: client socket (Socket)
     :param msg: parsed message
     :return: None
     """
     # complete for missing bytes
     missing_len = 16 - (len(msg) % 16)
     msg += '&' * missing_len
-
     # create encryptor
     encryptor = AES.new(SECRET_KEY, AES.MODE_CBC, IV)
 
     # send encoded message --> encrypted message to server.
-    encoded_message = msg.encode()
+    encoded_message = msg.encode('cp424')
     encrypted_message = encryptor.encrypt(encoded_message)
-    client.client_socket.send(encrypted_message)
+    client_socket.send(encrypted_message)
 
 
 def decryptTransmission(data: typing.AnyStr) -> tuple:
@@ -178,7 +178,7 @@ def decryptTransmission(data: typing.AnyStr) -> tuple:
 
     # decrypt--> decode--> parse data
     decrypted_data = decrypter.decrypt(data)
-    decoded_data = decrypted_data.decode()
+    decoded_data = decrypted_data.decode('cp424')
     justify_data = decoded_data.replace('&', '')
     parsed_data = parse_message(justify_data)
 
