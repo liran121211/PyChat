@@ -1,6 +1,7 @@
 # © 2021 Liran Smadja. All rights reserved.
 
 import threading
+import time
 from pathlib import Path
 
 from PyQt5 import QtWidgets
@@ -745,8 +746,9 @@ class MainChatScreen(Observable):
             QTimer.singleShot(2000, lambda: self.initLists())
 
         if ALLOW_ONCE["CHAT_ROOMS_NAMES"]:
-            self.client.send_msg(PROTOCOLS["chat_rooms_names"], "")
-            QTimer.singleShot(50000, lambda: self.initLists())
+            if not ALLOW_ONCE["ONLINE_USERS_TIMER"]:
+                self.client.send_msg(PROTOCOLS["chat_rooms_names"], "")
+            QTimer.singleShot(2000, lambda: self.initLists())
 
     def initImages(self) -> None:
         """

@@ -9,8 +9,8 @@ from Crypto.Cipher import AES
 from Protocol import *
 
 # encryption key
-SECRET_KEY = b'\x94}a\x1c:L\xa3\xc7\xe1\x86\xd2Oh\x88\x0f3'
-IV = b'%\xf0\x01@Q\x8a\xca\xfd\xeb\xdd\xc9\x0b5\x17\xc6D'
+SECRET_KEY = b'\xf8[\xd6\t<\xd8\x04a5siif\x93\xdc\xe0'
+IV = b'\x8e;\xf21bB\x0c\x95\x93\xce\xe9J3,\x04\xdd'
 
 
 class ClientTCP(Observable):
@@ -157,7 +157,7 @@ def encryptTransmission(client_socket: socket, msg: typing.AnyStr) -> None:
     """
     # complete for missing bytes
     missing_len = 16 - (len(msg) % 16)
-    msg += '&' * missing_len
+    msg += '~' * missing_len
     # create encryptor
     encryptor = AES.new(SECRET_KEY, AES.MODE_CBC, IV)
 
@@ -179,7 +179,7 @@ def decryptTransmission(data: typing.AnyStr) -> tuple:
     # decrypt--> decode--> parse data
     decrypted_data = decrypter.decrypt(data)
     decoded_data = decrypted_data.decode('cp424')
-    justify_data = decoded_data.replace('&', '')
+    justify_data = decoded_data.replace('~', '')
     parsed_data = parse_message(justify_data)
 
     return parsed_data
