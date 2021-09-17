@@ -13,21 +13,6 @@ SECRET_KEY = b'\x94}a\x1c:L\xa3\xc7\xe1\x86\xd2Oh\x88\x0f3'
 IV = b'%\xf0\x01@Q\x8a\xca\xfd\xeb\xdd\xc9\x0b5\x17\xc6D'
 
 
-def encryptTransmission(msg):
-    missing_len = 16 - (len(msg) % 16)
-    msg += '&' * missing_len
-    encryptor = AES.new(SECRET_KEY, AES.MODE_CBC, IV)
-    return encryptor.encrypt(msg.encode())
-
-
-def decryptTransmission(msg):
-    decrypter = AES.new(SECRET_KEY, AES.MODE_CBC, IV)
-    decrypted_message = decrypter.decrypt(msg)
-    decoded_message = decrypted_message.decode()
-    justify_message = decoded_message.replace('&', '')
-    return justify_message
-
-
 class ClientTCP(Observable):
     def __init__(self):
         Observable.__init__(self)
@@ -73,8 +58,10 @@ class ClientTCP(Observable):
         """
         while not self.isTerminated:
             try:
-                msg = self.client_socket.recv(self.max_msg_length).decode()
-                self.serverTransmission(self.client_socket, parse_message(msg))
+                encrypted_data = self.client_socket.recv(self.max_msg_length)
+                decrypted_data = decryptTransmission(encrypted_data)
+                self.serverTransmission(self.client_socket, decrypted_data)
+
             except ConnectionAbortedError:
                 self.isTerminated = True
                 self.notify(PROTOCOLS["server_offline"], "")
@@ -90,7 +77,7 @@ class ClientTCP(Observable):
         """
         # if client socket is not closed
         if not self.isTerminated:
-            self.client_socket.send(build_message(cmd, msg).encode())
+            self.encryptTransmission(build_message(cmd, msg))
 
     def serverTransmission(self, client_socket: socket, message) -> None:
         """
@@ -159,6 +146,43 @@ class ClientTCP(Observable):
 
         if cmd == "IS_SERVER_RUNNING":
             pass
+
+
+def encryptTransmission(msg: typing.AnyStr) -> None:
+    """
+    Encrypt data and send it to server.
+    :param msg: parsed message
+    :return: None
+    """
+    # complete for missing bytes
+    missing_len = 16 - (len(msg) % 16)
+    msg += '&' * missing_len
+
+    # create encryptor
+    encryptor = AES.new(SECRET_KEY, AES.MODE_CBC, IV)
+
+    # send encoded message --> encrypted message to server.
+    encoded_message = msg.encode()
+    encrypted_message = encryptor.encrypt(encoded_message)
+    client.client_socket.send(encrypted_message)
+
+
+def decryptTransmission(data: typing.AnyStr) -> tuple:
+    """
+    Decrypt data from server.
+    :param data: encrypted string (bytes)
+    :return: (cmd, msg) tuple.
+    """
+    # create decrypter
+    decrypter = AES.new(SECRET_KEY, AES.MODE_CBC, IV)
+
+    # decrypt--> decode--> parse data
+    decrypted_data = decrypter.decrypt(data)
+    decoded_data = decrypted_data.decode()
+    justify_data = decoded_data.replace('&', '')
+    parsed_data = parse_message(justify_data)
+
+    return parsed_data
 
 
 if __name__ == "__main__":
