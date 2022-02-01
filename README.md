@@ -114,30 +114,30 @@ Crypto.Chiper
   
 Fetching sound and images files, establishing connection to server, and check the status of the SQL database. 
 	
-![enter image description here](http://167.172.181.78/screenshots/loading_window.png)
+![enter image description here](https://i.ibb.co/cCpqQNN/loading-window.png)
 
  **<u>**Login Window**</u>**:
   
  Only registered user can access the chat application.
  
- ![enter image description here](http://167.172.181.78/screenshots/login_window.png)
+ ![enter image description here](https://i.ibb.co/FmW0Tcf/login-window.png)
 
  **<u>**Register Window**</u>**:
   
 Fast register page, other user parameters are randomly generated.
 
-![enter image description here](http://167.172.181.78/screenshots/register_window.png)
+![enter image description here](https://i.ibb.co/BtL05qd/register-window.png)
   
   **<u>**Main Chat Window**</u>**:
   
 After successful login, the chat window will be loaded with the real-time data from the server, Includes: Online Users, Chat Rooms.
-![enter image description here](http://167.172.181.78/screenshots/main_chat1.png)
+![enter image description here](https://i.ibb.co/mcZd7ZJ/main-chat1.png)
 
-![enter image description here](http://167.172.181.78/screenshots/main_chat2.png)
+![enter image description here](https://i.ibb.co/DKL1HC3/main-chat2.png)
  
- ![enter image description here](http://167.172.181.78/screenshots/settings_panel.png)
+ ![enter image description here](https://i.ibb.co/yRM2t1v/settings-panel.png)
  
- ![enter image description here](http://167.172.181.78/screenshots/about_panel.png)
+ ![enter image description here](https://i.ibb.co/z8SGmgQ/about-panel.png)
 <!-- ROADMAP -->
 ## Features
 
