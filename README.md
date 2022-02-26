@@ -105,7 +105,7 @@ Crypto.Chiper
 	
 	[Python Version](https://github.com/liran121211/PyChat/archive/refs/heads/master.zip)
 	
-	[EXE Version](http://167.172.181.78/PyChat.zip)
+	[EXE Version](http://139.59.213.105/PyChat.zip)
 
 
 ## Screenshots
