@@ -4,15 +4,14 @@ import psycopg2
 from Protocol import *
 import threading
 
-DATABASE_ADDRESS = "HIDDEN"
-DATABASE_NAME = "HIDDEN"
-DATABASE_SCHEME = "HIDDEN"
-DATABASE_USER = "HIDDEN"
-DATABASE_PASSWORD = "HIDDEN"
-DATABASE_PORT = "HIDDEN"
-SECRET_KEY = "HIDDEN"
-IV = "HIDDEN"
-
+DATABASE_ADDRESS = "NONE"
+DATABASE_NAME = "NONE"
+DATABASE_SCHEME = "NONE"
+DATABASE_USER = "NONE"
+DATABASE_PASSWORD = "NONE"
+DATABASE_PORT = "NONE"
+SECRET_KEY = b'\xf8[\xd6\t<\xd8\x04a5siif\x93\xdc\xe0'
+IV = b'\x8e;\xf21bB\x0c\x95\x93\xce\xe9J3,\x04\xdd'
 
 class DBConnection():
     def __init__(self):
@@ -131,6 +130,7 @@ class DBConnection():
             return sql_query_result
 
         if column is None and filter_key is None and filter_value is None:
+            print("{} table called from DB".format(table))
             sql_auth = "SELECT * FROM {0}.{1}".format(DATABASE_SCHEME, table)
             self.cursor.execute(sql_auth)
             sql_query_result = self.cursor.fetchall()

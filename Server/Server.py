@@ -11,6 +11,8 @@ from sys import exit
 from Protocol import *
 from Crypto.Cipher import AES
 from string import ascii_letters
+from multiavatar.multiavatar import multiavatar
+
 
 
 class MultipleTCP:
@@ -107,6 +109,7 @@ class MultipleTCP:
                 exit(1)
 
     def clientTransmission(self, client_socket, message):
+        print("SERVER REQUEST: ", message)
         """
         Receive message from client that contains (command) to follow.
         :param client_socket: Client socket obj.
@@ -201,7 +204,7 @@ class MultipleTCP:
 
         if cmd == "REPLACE_USER_AVATAR":
             # real-time user avatar updating
-            threading.Thread(target=replaceAvatar, args=(client_socket, msg, 0,)).start()
+            threading.Thread(target=replaceAvatar, args=(client_socket, msg)).start()
 
         if cmd == "REPLACE_USERNAME_COLOR":
             color, username = msg.split('#')
@@ -241,7 +244,7 @@ class MultipleTCP:
 
             elif len(result) != 0:
                 # fetch new avatar for new user
-                replaceAvatar(current_socket=client_socket, username=decoded_data[0], k=0)
+                replaceAvatar(current_socket=client_socket, username=decoded_data[0])
 
                 # send confirmation of registration
                 dispatch = build_message(PROTOCOLS["register_user"], "SUCCESS")
@@ -332,27 +335,17 @@ def encryptTransmission(message: tuple) -> None:
         sys.exit(1)
 
 
-def replaceAvatar(current_socket, username, k=0) -> None:
+def replaceAvatar(current_socket, username) -> None:
     """
     Fetch unique avatar image from online resource
     :param username: username (String) who requested to change the avatar.
     :param current_socket: client socket.
-    :param k: (API_KEYS) index of item
     """
-    API_KEYS = ['jLxwGNautbW3U0', 'u2c0LV54YRHKeG', 'bj5N7ftocy9dzF', '5V0Z4Iznj9qETs', 'xDjIeCkAWKlS2M']
     random_string = ''.join(random.choice(ascii_letters) for _ in range(15))
 
-    IMAGE_LIMIT_REACHED = 'Limit reached'
-    image_url = 'https://api.multiavatar.com/{0}.svg?apikey={1}'.format(random_string, API_KEYS[0])
-    svg_data = requests.get(image_url).content
-
-    if IMAGE_LIMIT_REACHED in svg_data.decode():
-        try:
-            replaceAvatar(username, None, k + 1)
-        except IndexError:
-            replaceAvatar(username, None, 0)
-
+    svg_data = str(multiavatar(random_string, None, None)).encode(encoding='UTF-8')
     open('../var/www/html/avatars/{0}.svg'.format(username), 'wb').write(svg_data)
+
     dispatch = build_message(PROTOCOLS["replace_user_avatar"], "SUCCESS")
     server.messages_to_send.append((current_socket, dispatch))
 
